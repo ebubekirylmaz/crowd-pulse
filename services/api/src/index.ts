@@ -1,9 +1,20 @@
 import Fastify from "fastify";
+import authRoutes from "./routes/auth.js";
+import jwt from "@fastify/jwt";
 import { redis } from "./redis.js";
 import { sql } from "./db/index.js";
+
 const app = Fastify({
   logger: true,
 });
+
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret) {
+  throw new Error("JWT_SECRET is not set");
+}
+
+app.register(jwt, { secret: jwtSecret });
+app.register(authRoutes);
 
 app.get("/health", async (_req, reply) => {
   const [dbResult, redisResult] = await Promise.allSettled([
