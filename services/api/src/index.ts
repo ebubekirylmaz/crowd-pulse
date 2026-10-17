@@ -2,6 +2,7 @@ import Fastify, { FastifyReply, FastifyRequest } from "fastify";
 
 import authRoutes from "./routes/auth.js";
 import jwt from "@fastify/jwt";
+import participantRoutes from "./routes/participants.js";
 import { redis } from "./redis.js";
 import roomRoutes from "./routes/rooms.js";
 import { sql } from "./db/index.js";
@@ -28,7 +29,7 @@ app.decorate(
 );
 app.register(authRoutes);
 app.register(roomRoutes);
-
+app.register(participantRoutes);
 app.get("/health", async (_req, reply) => {
   const [dbResult, redisResult] = await Promise.allSettled([
     sql`select 1`,
