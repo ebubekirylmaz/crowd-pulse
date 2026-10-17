@@ -1,7 +1,9 @@
-import Fastify from "fastify";
+import Fastify, { FastifyReply, FastifyRequest } from "fastify";
+
 import authRoutes from "./routes/auth.js";
 import jwt from "@fastify/jwt";
 import { redis } from "./redis.js";
+import roomRoutes from "./routes/rooms.js";
 import { sql } from "./db/index.js";
 
 const app = Fastify({
@@ -14,7 +16,18 @@ if (!jwtSecret) {
 }
 
 app.register(jwt, { secret: jwtSecret });
+app.decorate(
+  "authenticate",
+  async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      await request.jwtVerify();
+    } catch {
+      return reply.code(401).send({ error: "unauthorized" });
+    }
+  },
+);
 app.register(authRoutes);
+app.register(roomRoutes);
 
 app.get("/health", async (_req, reply) => {
   const [dbResult, redisResult] = await Promise.allSettled([

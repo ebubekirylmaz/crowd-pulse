@@ -53,12 +53,7 @@ export default async function authRoutes(app: FastifyInstance) {
     return reply.code(200).send({ token });
   });
 
-  app.get("/auth/me", async (request, reply) => {
-    try {
-      await request.jwtVerify();
-    } catch (error) {
-      return reply.code(401).send({ error: "unauthorized" });
-    }
+  app.get("/auth/me", { preHandler: app.authenticate }, async (request, reply) => {
     const [host] =
       await sql`select id, email from hosts where id = ${request.user.sub}`;
     if (!host) {
