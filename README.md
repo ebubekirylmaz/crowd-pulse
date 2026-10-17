@@ -18,6 +18,7 @@ Most portfolio apps are a single frontend talking to a single API. This project 
 ## Features
 
 ### Live Q&A and polling
+
 - Host creates a room and gets a join link and QR code
 - Participants join from their phone with just a display name, no account needed
 - One active poll per room, results update live without page refresh
@@ -25,12 +26,14 @@ Most portfolio apps are a single frontend talking to a single API. This project 
 - Reconnect handling and one vote per participant session
 
 ### Analytics
+
 - Tiny JS snippet (target: under 2 KB), cookieless, sends events with `sendBeacon` in batches
 - Ingest endpoint with validation and rate limiting
 - Raw events stored in a time-partitioned table, hourly and daily rollup tables for fast reads
 - Dashboard with visitors, event counts, time series and per-room breakdown
 
 ### Micro-frontend shell
+
 - Host app composes the Q&A and Analytics modules at runtime (Module Federation)
 - Shared auth token and an event-based shared state between modules
 - Each module has its own build and deploy pipeline
@@ -63,14 +66,14 @@ The Q&A module talks to the realtime API. The analytics snippet embedded in Q&A 
 
 ## Tech stack
 
-| Area | Choice |
-| --- | --- |
-| Monorepo | pnpm workspaces + Turborepo |
-| Frontend | React, TypeScript, Vite, Module Federation |
-| Realtime backend | Node.js, Fastify, Socket.IO |
-| Data | Postgres (events, rollups, rooms, votes), Redis (pub/sub, counters) |
-| Testing | Playwright (e2e), k6 (load tests), Lighthouse (performance) |
-| Infra | Docker Compose locally; Vercel or Cloudflare for frontends, Fly.io or Railway for backend |
+| Area             | Choice                                                                                    |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| Monorepo         | pnpm workspaces + Turborepo                                                               |
+| Frontend         | React, TypeScript, Vite, Module Federation                                                |
+| Realtime backend | Node.js, Fastify, Socket.IO                                                               |
+| Data             | Postgres (events, rollups, rooms, votes), Redis (pub/sub, counters)                       |
+| Testing          | Playwright (e2e), k6 (load tests), Lighthouse (performance)                               |
+| Infra            | Docker Compose locally; Vercel or Cloudflare for frontends, Fly.io or Railway for backend |
 
 ## Repository layout
 
@@ -114,25 +117,25 @@ Then open the shell app and create a room from the host view. Exact ports and en
 
 ### Environment variables
 
-| Variable | Description |
-| --- | --- |
-| `DATABASE_URL` | Postgres connection string |
-| `REDIS_URL` | Redis connection string |
-| `JWT_SECRET` | Secret used to sign host auth tokens |
+| Variable                  | Description                                                           |
+| ------------------------- | --------------------------------------------------------------------- |
+| `DATABASE_URL`            | Postgres connection string                                            |
+| `REDIS_URL`               | Redis connection string                                               |
+| `JWT_SECRET`              | Secret used to sign host auth tokens                                  |
 | `ANALYTICS_SALT_ROTATION` | Rotation period for the daily salt used in cookieless visitor hashing |
 
 ## Performance and measurements
 
 Numbers will be filled in from real test runs, not estimates.
 
-| Metric | Target | Result |
-| --- | --- | --- |
-| Concurrent WebSocket connections in one room | _TBD_ | _TBD_ |
-| Vote to host-screen latency (p95) | under 1 s | _TBD_ |
-| Analytics snippet size (gzipped) | under 2 KB | _TBD_ |
-| Ingest throughput (events/sec) | _TBD_ | _TBD_ |
-| Dashboard query time (p95) over synthetic data | _TBD_ | _TBD_ |
-| Shell + remotes bundle sizes | _TBD_ | _TBD_ |
+| Metric                                         | Target     | Result |
+| ---------------------------------------------- | ---------- | ------ |
+| Concurrent WebSocket connections in one room   | _TBD_      | _TBD_  |
+| Vote to host-screen latency (p95)              | under 1 s  | _TBD_  |
+| Analytics snippet size (gzipped)               | under 2 KB | _TBD_  |
+| Ingest throughput (events/sec)                 | _TBD_      | _TBD_  |
+| Dashboard query time (p95) over synthetic data | _TBD_      | _TBD_  |
+| Shell + remotes bundle sizes                   | _TBD_      | _TBD_  |
 
 ## Architecture decision records
 
@@ -149,19 +152,22 @@ Planned ADRs, written as the decisions are made:
 ## Roadmap
 
 **Week 1: Live Q&A and polling**
-- [ ] Monorepo, API skeleton, Postgres schema, Docker Compose
+
+- [x] Monorepo, API skeleton, Postgres schema, Docker Compose
 - [ ] WebSocket rooms, Redis pub/sub, vote and question events
 - [ ] Host view and participant view (mobile first)
 - [ ] Live results chart, reconnect and duplicate-vote handling
 - [ ] First deployment with a public demo room
 
 **Week 2: Analytics**
+
 - [ ] JS snippet and ingest endpoint with rate limiting
 - [ ] Time-partitioned raw events and rollup jobs
 - [ ] Query API and dashboard UI
 - [ ] Load tests and first measurements
 
 **Week 3: Micro-frontend shell and polish**
+
 - [ ] Shell app with Module Federation, shared auth and state
 - [ ] Independent CI/CD per module, remote failure fallback
 - [ ] Playwright e2e tests, Lighthouse and bundle size checks
