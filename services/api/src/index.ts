@@ -5,6 +5,7 @@ import jwt from "@fastify/jwt";
 import participantRoutes from "./routes/participants.js";
 import { redis } from "./redis.js";
 import roomRoutes from "./routes/rooms.js";
+import { setupRealtime } from "./realtime.js";
 import { sql } from "./db/index.js";
 
 const app = Fastify({
@@ -30,6 +31,9 @@ app.decorate(
 app.register(authRoutes);
 app.register(roomRoutes);
 app.register(participantRoutes);
+
+setupRealtime(app);
+
 app.get("/health", async (_req, reply) => {
   const [dbResult, redisResult] = await Promise.allSettled([
     sql`select 1`,
