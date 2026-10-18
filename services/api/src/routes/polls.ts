@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { getPollResults } from "../db/pollResults.js";
 import { sql } from "../db/index.js";
 import { z } from "zod";
 
@@ -72,6 +73,7 @@ export default async function pollRoutes(app: FastifyInstance) {
           await tx`update polls set status = 'active' where id = ${owned.id} returning id, question, status`;
         return activated;
       });
+      app.io.to(`room:${owned.room_id}`).emit("poll:activated", { poll });
       return reply.code(200).send({ poll });
     },
   );
@@ -94,6 +96,7 @@ export default async function pollRoutes(app: FastifyInstance) {
 
       const [poll] =
         await sql`update polls set status = 'closed' where id = ${owned.id} returning id, question, status`;
+      app.io.to(`room:${owned.room_id}`).emit("poll:closed", { poll });
       return reply.code(200).send({ poll });
     },
   );
@@ -113,8 +116,7 @@ export default async function pollRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: "no active poll" });
       }
 
-      const options =
-        await sql`select o.id, o.label, o.position, count(v.id)::int as votes from poll_options o left join votes v on v.option_id = o.id where o.poll_id = ${poll.id} group by o.id order by o.position`;
+      const options = await getPollResults(poll.id);
       return reply.code(200).send({ poll, options });
     },
   );

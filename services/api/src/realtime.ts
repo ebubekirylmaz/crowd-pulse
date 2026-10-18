@@ -1,9 +1,17 @@
 import type { FastifyInstance } from "fastify";
 import { Server } from "socket.io";
+import { getPollResults } from "./db/pollResults.js";
 import { sql } from "./db/index.js";
+import { z } from "zod";
+
+const voteCastSchema = z.object({
+  optionId: z.string().uuid(),
+});
 
 export function setupRealtime(app: FastifyInstance) {
   const io = new Server(app.server, { cors: { origin: "*" } });
+
+  app.decorate("io", io);
 
   io.use(async (socket, next) => {
     try {
@@ -44,6 +52,48 @@ export function setupRealtime(app: FastifyInstance) {
   io.on("connection", (socket) => {
     socket.join(`room:${socket.data.roomId}`);
     socket.emit("room:joined", { role: socket.data.role });
+
+    socket.on("vote:cast", async (payload, ack) => {
+      if (typeof ack !== "function") {
+        return;
+      }
+      try {
+        if (socket.data.role !== "participant") {
+          return ack({ ok: false, error: "forbidden" });
+        }
+        const { success, data: parsedData } = voteCastSchema.safeParse(payload);
+        if (!success) {
+          return ack({ ok: false, error: "invalid_input" });
+        }
+        const [poll] =
+          await sql`select id from polls where room_id = ${socket.data.roomId} and status = 'active'`;
+        if (!poll) {
+          return ack({ ok: false, error: "poll_not_active" });
+        }
+        const [option] =
+          await sql`select id from poll_options where poll_id = ${poll.id} and id = ${parsedData.optionId}`;
+        if (!option) {
+          return ack({ ok: false, error: "invalid_option" });
+        }
+        try {
+          await sql`insert into votes (poll_id, option_id, participant_id) values (${poll.id}, ${option.id}, ${socket.data.participantId})`;
+        } catch (error) {
+          if ((error as { code?: string }).code === "23505") {
+            return ack({ ok: false, error: "already_voted" });
+          }
+          throw error;
+        }
+        const options = await getPollResults(poll.id);
+        io.to(`room:${socket.data.roomId}`).emit("poll:results", {
+          pollId: poll.id,
+          options,
+        });
+        ack({ ok: true });
+      } catch (error) {
+        app.log.error(error);
+        ack({ ok: false, error: "server_error" });
+      }
+    });
   });
 
   app.addHook("onClose", async () => {
