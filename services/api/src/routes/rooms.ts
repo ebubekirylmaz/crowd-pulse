@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { getQuestions } from "../db/questions.js";
 import { randomInt } from "node:crypto";
 import { sql } from "../db/index.js";
 import { z } from "zod";
@@ -58,6 +59,19 @@ export default async function roomRoutes(app: FastifyInstance) {
         return reply.code(404).send({ error: "room not found" });
       }
       return reply.code(200).send(room);
+    },
+  );
+
+  app.get<{ Params: { code: string } }>(
+    "/rooms/:code/questions",
+    async (request, reply) => {
+      const { code } = request.params;
+      const [room] =
+        await sql`select id from rooms where code = ${code.toUpperCase()}`;
+      if (!room) {
+        return reply.code(404).send({ error: "room not found" });
+      }
+      return reply.code(200).send(await getQuestions(room.id));
     },
   );
 }
