@@ -3,6 +3,7 @@ import Fastify, { FastifyReply, FastifyRequest } from "fastify";
 import authRoutes from "./routes/auth.js";
 import jwt from "@fastify/jwt";
 import participantRoutes from "./routes/participants.js";
+import pollRoutes from "./routes/polls.js";
 import { redis } from "./redis.js";
 import roomRoutes from "./routes/rooms.js";
 import { setupRealtime } from "./realtime.js";
@@ -31,6 +32,7 @@ app.decorate(
 app.register(authRoutes);
 app.register(roomRoutes);
 app.register(participantRoutes);
+app.register(pollRoutes);
 
 setupRealtime(app);
 
