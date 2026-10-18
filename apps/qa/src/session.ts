@@ -20,3 +20,11 @@ export function loadSession(code: string): Session | null {
     return null;
   }
 }
+
+export function clearSession(code: string) {
+  try {
+    localStorage.removeItem(key(code));
+  } catch {
+    // yoksay
+  }
+}

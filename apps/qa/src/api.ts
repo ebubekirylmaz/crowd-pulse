@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 export class ApiError extends Error {
   status: number;
@@ -12,7 +12,6 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(API_URL + path, {
     ...init,
     headers: {
-      // Gövdesiz isteğe bu başlık eklenirse sunucu 400 döner
       ...(init.body ? { "content-type": "application/json" } : {}),
       ...init.headers,
     },
@@ -31,6 +30,24 @@ export type JoinResponse = {
   room: Room;
 };
 
+export type PollOption = {
+  id: string;
+  label: string;
+  position: number;
+  votes: number;
+};
+export type ActivePoll = {
+  poll: { id: string; question: string };
+  options: PollOption[];
+};
+export type Question = {
+  id: string;
+  body: string;
+  displayName: string;
+  createdAt: string;
+  upvotes: number;
+};
+
 export const api = {
   getRoom: (code: string) => request<Room>(`/rooms/${code}`),
   joinRoom: (code: string, displayName: string) =>
@@ -38,4 +55,8 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ displayName }),
     }),
+  getActivePoll: (code: string) =>
+    request<ActivePoll>(`/rooms/${code}/polls/active`),
+  getQuestions: (code: string) =>
+    request<Question[]>(`/rooms/${code}/questions`),
 };
