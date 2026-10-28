@@ -1,11 +1,11 @@
 const KEY = "cp:host-token";
 
-// localStorage bazı modlarda hata fırlatır; bu durumda giriş sadece hatırlanmaz.
 export function saveToken(token: string) {
   try {
     localStorage.setItem(KEY, token);
+    return true;
   } catch {
-    // yoksay
+    return false;
   }
 }
 
@@ -20,7 +20,8 @@ export function loadToken(): string | null {
 export function clearToken() {
   try {
     localStorage.removeItem(KEY);
+    return true;
   } catch {
-    // yoksay
+    return false;
   }
 }

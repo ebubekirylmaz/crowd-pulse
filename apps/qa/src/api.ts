@@ -75,4 +75,10 @@ export const api = {
     request<HostRoom[]>("/rooms", {
       headers: { authorization: `Bearer ${token}` },
     }),
+  createRoom: (token: string, title: string) =>
+    request<HostRoom>("/rooms", {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}` },
+      body: JSON.stringify({ title }),
+    }),
 };
