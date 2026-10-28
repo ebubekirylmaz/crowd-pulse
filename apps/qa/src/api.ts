@@ -48,6 +48,8 @@ export type Question = {
   upvotes: number;
 };
 
+export type HostRoom = Room & { createdAt: string };
+
 export const api = {
   getRoom: (code: string) => request<Room>(`/rooms/${code}`),
   joinRoom: (code: string, displayName: string) =>
@@ -59,4 +61,18 @@ export const api = {
     request<ActivePoll>(`/rooms/${code}/polls/active`),
   getQuestions: (code: string) =>
     request<Question[]>(`/rooms/${code}/questions`),
+  login: (email: string, password: string) =>
+    request<{ token: string }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  register: (email: string, password: string) =>
+    request<{ id: string; email: string }>("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    }),
+  listRooms: (token: string) =>
+    request<HostRoom[]>("/rooms", {
+      headers: { authorization: `Bearer ${token}` },
+    }),
 };

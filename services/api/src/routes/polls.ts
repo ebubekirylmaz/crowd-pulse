@@ -120,4 +120,26 @@ export default async function pollRoutes(app: FastifyInstance) {
       return reply.code(200).send({ poll, options });
     },
   );
+
+  app.get<{ Params: { code: string } }>(
+    "/rooms/:code/polls",
+    { preHandler: app.authenticate },
+    async (request, reply) => {
+      const [room] =
+        await sql`select id from rooms where code = ${request.params.code.toUpperCase()} and host_id = ${request.user.sub}`;
+      if (!room) {
+        return reply.code(404).send({ error: "room not found" });
+      }
+
+      const polls =
+        await sql`select id, question, status, created_at as "createdAt" from polls where room_id = ${room.id} order by created_at desc`;
+      const pollsWithOptions = await Promise.all(
+        polls.map(async (poll) => {
+          const options = await getPollResults(poll.id);
+          return { ...poll, options };
+        }),
+      );
+      return reply.code(200).send(pollsWithOptions);
+    },
+  );
 }

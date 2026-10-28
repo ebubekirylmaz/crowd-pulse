@@ -33,7 +33,7 @@ export default async function roomRoutes(app: FastifyInstance) {
         const code = generateCode();
         try {
           const [room] =
-            await sql`insert into rooms (host_id, code, title) values (${request.user.sub}, ${code}, ${title}) returning id, code, title, created_at`;
+            await sql`insert into rooms (host_id, code, title) values (${request.user.sub}, ${code}, ${title}) returning id, code, title, created_at as "createdAt"`;
           return reply.code(201).send(room);
         } catch (error) {
           if ((error as { code?: string }).code !== "23505") {
@@ -46,7 +46,7 @@ export default async function roomRoutes(app: FastifyInstance) {
   );
 
   app.get("/rooms", { preHandler: app.authenticate }, async (request) => {
-    return sql`select id, code, title, created_at from rooms where host_id = ${request.user.sub} order by created_at desc`;
+    return sql`select id, code, title, created_at as "createdAt" from rooms where host_id = ${request.user.sub} order by created_at desc`;
   });
 
   app.get<{ Params: { code: string } }>(
