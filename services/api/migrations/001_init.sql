@@ -1,4 +1,3 @@
--- hosts
 create table hosts (
   id uuid primary key default gen_random_uuid(),
   email text not null unique,
@@ -6,7 +5,6 @@ create table hosts (
   created_at timestamptz not null default now()
 );
 
--- rooms
 create table rooms (
   id uuid primary key default gen_random_uuid(),
   host_id uuid not null references hosts(id) on delete cascade,
@@ -15,7 +13,6 @@ create table rooms (
   created_at timestamptz not null default now()
 );
 
--- participants
 create table participants (
   id uuid primary key default gen_random_uuid(),
   room_id uuid references rooms(id) on delete cascade,
@@ -24,7 +21,6 @@ create table participants (
   created_at timestamptz not null default now()
 );
 
--- polls
 create table polls (
   id uuid primary key default gen_random_uuid(),
   room_id uuid references rooms(id) on delete cascade,
@@ -33,7 +29,6 @@ create table polls (
   created_at timestamptz not null default now()
 );
 
--- poll_options
 create table poll_options (
   id uuid primary key default gen_random_uuid(),
   poll_id uuid references polls(id) on delete cascade,
@@ -41,7 +36,6 @@ create table poll_options (
   position int not null
 );
 
--- votes
 create table votes (
   id uuid primary key default gen_random_uuid(),
   poll_id uuid references polls(id) on delete cascade,
@@ -51,7 +45,6 @@ create table votes (
   unique (poll_id, participant_id)
 );
 
--- questions
 create table questions (
   id uuid primary key default gen_random_uuid(),
   room_id uuid references rooms(id) on delete cascade,
@@ -60,7 +53,6 @@ create table questions (
   created_at timestamptz not null default now()
 );
 
--- question_upvotes
 create table question_upvotes (
   question_id uuid references questions(id) on delete cascade,
   participant_id uuid references participants(id) on delete cascade,
