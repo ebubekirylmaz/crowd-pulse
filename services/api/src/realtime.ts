@@ -18,7 +18,9 @@ const questionUpvoteSchema = z.object({
 });
 
 export function setupRealtime(app: FastifyInstance) {
-  const io = new Server(app.server, { cors: { origin: "*" } });
+  const io = new Server(app.server, {
+    cors: { origin: process.env.CORS_ORIGIN ?? "http://localhost:5173" },
+  });
 
   app.decorate("io", io);
 
