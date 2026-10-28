@@ -9,7 +9,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "migrate": "tsx --env-file=../../.env src/db/migrate.ts"
+    "migrate": "tsx --env-file=../../.env src/db/migrate.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fastify/cors": "^11.3.1",
@@ -19,6 +20,7 @@
     "ioredis": "^6.0.0",
     "postgres": "^3.4.9",
     "socket.io": "^4.8.4",
+    "vitest": "^5.0.5",
     "zod": "^4.6.7"
   },
   "devDependencies": {
