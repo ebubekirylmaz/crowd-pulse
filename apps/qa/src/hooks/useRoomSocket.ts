@@ -8,17 +8,9 @@ import {
   type PollOption,
   type Question,
 } from "../api";
+import { sortQuestions } from "../lib/sortQuestions";
 
 type Ack = { ok: boolean; error?: string };
-
-function sortQuestions(list: Question[]) {
-  return [...list].sort((a, b) => {
-    if (a.upvotes === b.upvotes) {
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    }
-    return b.upvotes - a.upvotes;
-  });
-}
 
 export function useRoomSocket(code: string, sessionToken: string) {
   const socketRef = useRef<Socket | null>(null);

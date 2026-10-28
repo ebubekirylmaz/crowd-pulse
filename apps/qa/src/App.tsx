@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import HostDashboard from "./pages/HostDashboard.tsx";
 import HostLogin from "./pages/HostLogin.tsx";
+import HostRoomPage from "./pages/HostRoomPage.tsx";
 import Join from "./pages/Join.tsx";
 import RequireHost from "./components/RequireHost.tsx";
 import Room from "./pages/Room.tsx";
@@ -18,6 +19,14 @@ export default function App() {
           element={
             <RequireHost>
               <HostDashboard />
+            </RequireHost>
+          }
+        />
+        <Route
+          path="/host/rooms/:code"
+          element={
+            <RequireHost>
+              <HostRoomPage />
             </RequireHost>
           }
         />
