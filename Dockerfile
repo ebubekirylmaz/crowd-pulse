@@ -14,4 +14,4 @@ WORKDIR /app
 COPY --from=build /app /app
 WORKDIR /app/services/api
 EXPOSE 3000
-CMD ["sh", "-c", "node dist/db/migrate.js && node dist/index.js"]
+CMD ["node", "dist/index.js"]
