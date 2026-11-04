@@ -2,6 +2,18 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, ApiError, type Room } from "../api";
 import { loadSession, saveSession } from "../session";
+import {
+  Alert,
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  GradientScreen,
+  Logo,
+  Spinner,
+  TextInput,
+} from "../components/ui";
+import { PulseIcon } from "../components/icons";
 
 export default function Join() {
   const { code = "" } = useParams();
@@ -63,37 +75,54 @@ export default function Join() {
       .finally(() => setSubmitting(false));
   }
 
-  if (loading) {
-    return <div className="p-4 text-center">Yükleniyor...</div>;
-  }
-  if (loadError || !room) {
-    return <div className="p-4 text-center">{loadError ?? "Oda bulunamadı"}</div>;
-  }
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <h1 className="mb-6 text-center text-2xl font-bold">{room.title}</h1>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <input
-            type="text"
-            maxLength={40}
-            placeholder="Adın"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base"
+    <GradientScreen>
+      <Logo />
+      {loading ? (
+        <Spinner className="h-8 w-8" />
+      ) : loadError || !room ? (
+        <Card className="w-full">
+          <EmptyState
+            icon={<PulseIcon className="h-6 w-6" />}
+            title={loadError ?? "Oda bulunamadı"}
+            hint="Linki ya da oda kodunu kontrol edip tekrar dene."
           />
-          <button
-            type="submit"
-            disabled={submitting || displayName.trim() === ""}
-            className="w-full rounded-lg bg-slate-900 px-3 py-2 text-base font-semibold text-white disabled:opacity-50"
-          >
-            Katıl
-          </button>
-          {submitError && (
-            <p className="text-center text-sm text-red-600">{submitError}</p>
-          )}
-        </form>
-      </div>
-    </div>
+        </Card>
+      ) : (
+        <Card className="w-full animate-fade-in">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Odaya katılıyorsun
+          </p>
+          <h1 className="mt-1 mb-6 text-2xl font-bold tracking-tight">
+            {room.title}
+          </h1>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <Field label="Adın" hint="Sorularında diğer katılımcılar bu adı görür.">
+              <TextInput
+                type="text"
+                maxLength={40}
+                placeholder="Örn. Ayşe"
+                autoComplete="nickname"
+                autoFocus
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+              />
+            </Field>
+            <Button
+              type="submit"
+              size="lg"
+              fullWidth
+              disabled={submitting || displayName.trim() === ""}
+            >
+              {submitting ? "Katılıyor..." : "Katıl"}
+            </Button>
+            {submitError && <Alert>{submitError}</Alert>}
+          </form>
+        </Card>
+      )}
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Hesap gerekmez · Oda kodu {code.toUpperCase()}
+      </p>
+    </GradientScreen>
   );
 }

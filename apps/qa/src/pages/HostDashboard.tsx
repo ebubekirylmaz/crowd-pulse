@@ -2,15 +2,20 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError, type HostRoom } from "../api";
 import { clearToken, loadToken } from "../hostAuth";
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("tr-TR", {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import { formatDate } from "../lib/format";
+import {
+  Alert,
+  Badge,
+  Button,
+  buttonStyles,
+  Card,
+  EmptyState,
+  Logo,
+  Spinner,
+  TextInput,
+  TopBar,
+} from "../components/ui";
+import { CheckIcon, CopyIcon, LogOutIcon, PulseIcon } from "../components/icons";
 
 export default function HostDashboard() {
   const navigate = useNavigate();
@@ -83,67 +88,109 @@ export default function HostDashboard() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col gap-6 px-4 py-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Odalarım</h1>
-        <button
-          onClick={expire}
-          className="text-sm text-slate-600 underline"
-        >
-          Çıkış yap
-        </button>
-      </header>
+    <div className="min-h-dvh">
+      <TopBar
+        size="lg"
+        left={<Logo to="/host" />}
+        right={
+          <Button variant="ghost" size="sm" onClick={expire}>
+            <LogOutIcon />
+            Çıkış yap
+          </Button>
+        }
+      />
+      <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Odalarım</h1>
+          <p className="mt-1 text-slate-500 dark:text-slate-400">
+            Yeni bir oda aç ve katılımcılarla paylaş.
+          </p>
+        </div>
 
-      <form onSubmit={handleCreate} className="flex flex-col gap-2">
-        <input
-          type="text"
-          maxLength={100}
-          placeholder="Yeni oda başlığı"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-base"
-        />
-        <button
-          type="submit"
-          disabled={creating || title.trim() === ""}
-          className="w-full rounded-lg bg-slate-900 px-3 py-2 text-base font-semibold text-white disabled:opacity-50"
-        >
-          Oda oluştur
-        </button>
-        {createError && (
-          <p className="text-center text-sm text-red-600">{createError}</p>
-        )}
-      </form>
-
-      {loading ? (
-        <p className="text-center text-slate-600">Yükleniyor...</p>
-      ) : loadError ? (
-        <p className="text-center text-red-600">{loadError}</p>
-      ) : rooms.length === 0 ? (
-        <p className="text-center text-slate-600">Henüz oda yok</p>
-      ) : (
-        <ul className="flex flex-col gap-2">
-          {rooms.map((room) => (
-            <li
-              key={room.id}
-              className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"
+        <Card>
+          <form
+            onSubmit={handleCreate}
+            className="flex flex-col gap-3 sm:flex-row"
+          >
+            <TextInput
+              type="text"
+              maxLength={100}
+              placeholder="Yeni oda başlığı, örn. Haftalık toplantı"
+              aria-label="Oda başlığı"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <Button
+              type="submit"
+              disabled={creating || title.trim() === ""}
+              className="shrink-0 sm:w-auto"
             >
-              <Link to={`/host/rooms/${room.code}`} className="min-w-0 flex-1">
-                <p className="truncate font-semibold">{room.title}</p>
-                <p className="text-xs text-slate-500">
-                  {room.code} · {formatDate(room.createdAt)}
-                </p>
-              </Link>
-              <button
-                onClick={() => handleCopy(room.code)}
-                className="shrink-0 rounded-lg border border-slate-300 px-2 py-1 text-sm"
-              >
-                {copiedCode === room.code ? "Kopyalandı" : "Linki kopyala"}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+              {creating ? "Oluşturuluyor..." : "Oda oluştur"}
+            </Button>
+          </form>
+          {createError && (
+            <div className="mt-3">
+              <Alert>{createError}</Alert>
+            </div>
+          )}
+        </Card>
+
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <Spinner className="h-8 w-8" />
+          </div>
+        ) : loadError ? (
+          <Alert>{loadError}</Alert>
+        ) : rooms.length === 0 ? (
+          <Card>
+            <EmptyState
+              icon={<PulseIcon className="h-6 w-6" />}
+              title="Henüz oda yok"
+              hint="Yukarıdan ilk odanı oluştur, katılım linki ve QR kodu hemen hazır olur."
+            />
+          </Card>
+        ) : (
+          <ul className="grid gap-4 sm:grid-cols-2">
+            {rooms.map((room) => (
+              <li key={room.id}>
+                <Card className="flex h-full flex-col gap-4 animate-fade-in">
+                  <div className="min-w-0">
+                    <h2 className="truncate text-lg font-semibold">
+                      {room.title}
+                    </h2>
+                    <div className="mt-2 flex items-center gap-2">
+                      <Badge tone="brand">
+                        <span className="font-mono tracking-wider">
+                          {room.code}
+                        </span>
+                      </Badge>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {formatDate(room.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-auto flex gap-2">
+                    <Link
+                      to={`/host/rooms/${room.code}`}
+                      className={buttonStyles({ size: "sm" })}
+                    >
+                      Yönet
+                    </Link>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleCopy(room.code)}
+                    >
+                      {copiedCode === room.code ? <CheckIcon /> : <CopyIcon />}
+                      {copiedCode === room.code ? "Kopyalandı" : "Linki kopyala"}
+                    </Button>
+                  </div>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
     </div>
   );
 }

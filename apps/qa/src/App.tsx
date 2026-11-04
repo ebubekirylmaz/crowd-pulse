@@ -1,6 +1,8 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
+import Home from "./pages/Home.tsx";
 import HostDashboard from "./pages/HostDashboard.tsx";
+import NotFound from "./pages/NotFound.tsx";
 import HostLogin from "./pages/HostLogin.tsx";
 import HostRoomPage from "./pages/HostRoomPage.tsx";
 import Join from "./pages/Join.tsx";
@@ -11,6 +13,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/join" element={<Home />} />
         <Route path="/join/:code" element={<Join />} />
         <Route path="/r/:code" element={<Room />} />
         <Route path="/host/login" element={<HostLogin />} />
@@ -30,7 +34,7 @@ export default function App() {
             </RequireHost>
           }
         />
-        <Route path="*" element={<div>Bilgi</div>} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
