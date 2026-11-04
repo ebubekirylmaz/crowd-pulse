@@ -2,6 +2,7 @@ import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 
 import authRoutes from "./routes/auth.js";
 import cors from "@fastify/cors";
+import { corsOrigin } from "./config.js";
 import jwt from "@fastify/jwt";
 import participantRoutes from "./routes/participants.js";
 import pollRoutes from "./routes/polls.js";
@@ -16,7 +17,7 @@ export function buildApp() {
   });
 
   app.register(cors, {
-    origin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
+    origin: corsOrigin,
   });
 
   const jwtSecret = process.env.JWT_SECRET;

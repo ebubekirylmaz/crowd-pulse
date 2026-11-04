@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { Server } from "socket.io";
+import { corsOrigin } from "./config.js";
 import { getPollResults } from "./db/pollResults.js";
 import { getQuestion } from "./db/questions.js";
 import { sql } from "./db/index.js";
@@ -19,7 +20,7 @@ const questionUpvoteSchema = z.object({
 
 export function setupRealtime(app: FastifyInstance) {
   const io = new Server(app.server, {
-    cors: { origin: process.env.CORS_ORIGIN ?? "http://localhost:5173" },
+    cors: { origin: corsOrigin },
   });
 
   app.decorate("io", io);
