@@ -9,7 +9,7 @@ import {
   saveUpvotes,
   saveVote,
 } from "../lib/choices";
-import { percentOf, timeAgo } from "../lib/format";
+import { percentOf, pluralize, timeAgo } from "../lib/format";
 import {
   Alert,
   Badge,
@@ -99,7 +99,7 @@ function RoomView({
       saveVote(pollId, "");
       setMessage(null);
     } else {
-      setMessage("Oy verilemedi, tekrar dene");
+      setMessage("Couldn't submit your vote, try again");
     }
   }
 
@@ -114,7 +114,7 @@ function RoomView({
       setDraft("");
       setMessage(null);
     } else {
-      setMessage("Soru gönderilemedi, tekrar dene");
+      setMessage("Couldn't send your question, try again");
     }
   }
 
@@ -138,10 +138,10 @@ function RoomView({
       <main className="mx-auto flex max-w-xl flex-col gap-8 px-4 py-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            {room?.title ?? "Oda"}
+            {room?.title ?? "Room"}
           </h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {displayName} olarak katıldın
+            Joined as {displayName}
           </p>
         </div>
 
@@ -153,7 +153,7 @@ function RoomView({
               <div className="flex flex-col gap-4 animate-fade-in">
                 <div className="flex flex-col gap-2">
                   <div>
-                    <Badge tone="brand">Canlı anket</Badge>
+                    <Badge tone="brand">Live poll</Badge>
                   </div>
                   <h2
                     id="poll-heading"
@@ -199,7 +199,7 @@ function RoomView({
                             </span>
                             <span className="text-sm tabular-nums text-slate-500 dark:text-slate-400">
                               <span className="font-semibold text-slate-900 dark:text-slate-100">
-                                %{percent}
+                                {percent}%
                               </span>{" "}
                               · {option.votes}
                             </span>
@@ -210,15 +210,15 @@ function RoomView({
                   })}
                 </ul>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {hasVoted ? "Oyun kaydedildi · " : ""}
-                  Toplam {totalVotes} oy
+                  {hasVoted ? "Your vote is saved · " : ""}
+                  {pluralize(totalVotes, "vote")} total
                 </p>
               </div>
             ) : (
               <EmptyState
                 icon={<PulseIcon className="h-6 w-6" />}
-                title="Şu an aktif anket yok"
-                hint="Host bir anket başlattığında burada anında belirecek."
+                title="No active poll right now"
+                hint="It will appear here as soon as the host starts one."
               />
             )}
           </Card>
@@ -227,7 +227,7 @@ function RoomView({
         <section className="flex flex-col gap-4" aria-labelledby="questions-heading">
           <div className="flex items-center justify-between">
             <h2 id="questions-heading" className="text-lg font-semibold">
-              Sorular
+              Questions
             </h2>
             {questions.length > 0 && <Badge>{questions.length}</Badge>}
           </div>
@@ -239,8 +239,8 @@ function RoomView({
                 onChange={(e) => setDraft(e.target.value)}
                 maxLength={MAX_QUESTION_LENGTH}
                 rows={3}
-                placeholder="Merak ettiğin bir şeyi sor..."
-                aria-label="Sorunu yaz"
+                placeholder="Ask something you're curious about..."
+                aria-label="Write your question"
               />
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs tabular-nums text-slate-500">
@@ -250,7 +250,7 @@ function RoomView({
                   type="submit"
                   disabled={asking || draft.trim() === ""}
                 >
-                  {asking ? "Gönderiliyor..." : "Gönder"}
+                  {asking ? "Sending..." : "Send"}
                 </Button>
               </div>
             </form>
@@ -260,8 +260,8 @@ function RoomView({
             <Card>
               <EmptyState
                 icon={<MessageIcon className="h-6 w-6" />}
-                title="Henüz soru yok"
-                hint="İlk soruyu sen sor, beğenilenler yukarı çıkar."
+                title="No questions yet"
+                hint="Be the first to ask, the most upvoted rise to the top."
               />
             </Card>
           ) : (
@@ -276,7 +276,7 @@ function RoomView({
                     <button
                       onClick={() => handleUpvote(question.id)}
                       disabled={isUpvoted}
-                      aria-label="Soruyu destekle"
+                      aria-label="Upvote question"
                       className={cx(
                         "flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-xl border text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30",
                         isUpvoted

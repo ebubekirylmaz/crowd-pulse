@@ -197,7 +197,7 @@ export function LiveIndicator({ connected }: { connected: boolean }) {
           )}
         />
       </span>
-      {connected ? "Canlı" : "Bağlanıyor"}
+      {connected ? "Live" : "Connecting"}
     </span>
   );
 }
@@ -209,7 +209,7 @@ export function Spinner({ className = "h-6 w-6" }: { className?: string }) {
       fill="none"
       className={cx("animate-spin text-brand-600", className)}
       role="status"
-      aria-label="Yükleniyor"
+      aria-label="Loading"
     >
       <circle
         cx="12"

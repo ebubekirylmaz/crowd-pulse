@@ -4,7 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { api, ApiError, type HostPoll, type PollStatus } from "../api";
 import { clearToken, loadToken } from "../hostAuth";
 import { useHostRoom } from "../hooks/useHostRoom";
-import { percentOf, timeAgo } from "../lib/format";
+import { percentOf, pluralize, timeAgo } from "../lib/format";
 import {
   Alert,
   Badge,
@@ -31,9 +31,9 @@ import {
 } from "../components/icons";
 
 const STATUS_LABEL: Record<PollStatus, string> = {
-  draft: "Taslak",
-  active: "Aktif",
-  closed: "Kapalı",
+  draft: "Draft",
+  active: "Active",
+  closed: "Closed",
 };
 
 const STATUS_TONE: Record<PollStatus, "neutral" | "success" | "danger"> = {
@@ -112,7 +112,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
         expire();
         return;
       }
-      setMessage("Anket oluşturulamadı, tekrar dene");
+      setMessage("Couldn't create the poll, try again");
     } finally {
       setCreating(false);
     }
@@ -133,7 +133,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
         expire();
         return;
       }
-      setMessage("İşlem başarısız, tekrar dene");
+      setMessage("Action failed, try again");
     } finally {
       setBusyPollId(null);
     }
@@ -157,12 +157,12 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
           <Card>
             <EmptyState
               icon={<PulseIcon className="h-6 w-6" />}
-              title="Oda bulunamadı"
-              hint="Bu oda silinmiş ya da sana ait olmayabilir."
+              title="Room not found"
+              hint="This room may have been deleted or may not belong to you."
             />
             <div className="flex justify-center pb-2">
               <Link to="/host" className={buttonStyles({ size: "sm" })}>
-                Odalarıma dön
+                Back to my rooms
               </Link>
             </div>
           </Card>
@@ -181,7 +181,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
             className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
           >
             <ArrowLeftIcon />
-            Odalarım
+            My rooms
           </Link>
         }
         right={<LiveIndicator connected={connected} />}
@@ -204,7 +204,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
             </div>
             <div>
               <p className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Oda kodu
+                Room code
               </p>
               <p className="font-mono text-3xl font-bold tracking-[0.3em]">
                 {code}
@@ -215,20 +215,20 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
             </p>
             <Button variant="secondary" fullWidth onClick={handleCopy}>
               {copied ? <CheckIcon /> : <CopyIcon />}
-              {copied ? "Kopyalandı" : "Linki kopyala"}
+              {copied ? "Copied" : "Copy link"}
             </Button>
           </Card>
 
           <div className="flex min-w-0 flex-col gap-8">
             <section className="flex flex-col gap-3">
-              <h2 className="text-xl font-semibold">Yeni anket</h2>
+              <h2 className="text-xl font-semibold">New poll</h2>
               <Card>
                 <form onSubmit={handleCreate} className="flex flex-col gap-3">
                   <TextInput
                     type="text"
                     maxLength={200}
-                    placeholder="Anket sorusu"
-                    aria-label="Anket sorusu"
+                    placeholder="Poll question"
+                    aria-label="Poll question"
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                   />
@@ -238,8 +238,8 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
                         <TextInput
                           type="text"
                           maxLength={100}
-                          placeholder={`Seçenek ${index + 1}`}
-                          aria-label={`Seçenek ${index + 1}`}
+                          placeholder={`Option ${index + 1}`}
+                          aria-label={`Option ${index + 1}`}
                           value={option}
                           onChange={(e) => updateOption(index, e.target.value)}
                         />
@@ -247,7 +247,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
                           <Button
                             variant="secondary"
                             onClick={() => removeOption(index)}
-                            aria-label="Seçeneği sil"
+                            aria-label="Remove option"
                           >
                             <XIcon />
                           </Button>
@@ -263,13 +263,13 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
                         onClick={() => setOptions((prev) => [...prev, ""])}
                       >
                         <PlusIcon />
-                        Seçenek ekle
+                        Add option
                       </Button>
                     ) : (
                       <span />
                     )}
                     <Button type="submit" disabled={creating || !canCreate}>
-                      {creating ? "Oluşturuluyor..." : "Anketi oluştur"}
+                      {creating ? "Creating..." : "Create poll"}
                     </Button>
                   </div>
                 </form>
@@ -277,7 +277,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h2 className="text-xl font-semibold">Anketler</h2>
+              <h2 className="text-xl font-semibold">Polls</h2>
               {loading ? (
                 <div className="flex justify-center py-8">
                   <Spinner className="h-8 w-8" />
@@ -286,8 +286,8 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
                 <Card>
                   <EmptyState
                     icon={<PulseIcon className="h-6 w-6" />}
-                    title="Henüz anket yok"
-                    hint="Yukarıdan bir anket oluştur, sonra aktif ederek katılımcılara aç."
+                    title="No polls yet"
+                    hint="Create a poll above, then activate it to open it to participants."
                   />
                 </Card>
               ) : (
@@ -333,7 +333,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
                                     </span>
                                     <span className="text-sm tabular-nums text-slate-500 dark:text-slate-400">
                                       <span className="font-semibold text-slate-900 dark:text-slate-100">
-                                        %{percent}
+                                        {percent}%
                                       </span>{" "}
                                       · {option.votes}
                                     </span>
@@ -344,7 +344,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
                           </ul>
                           <div className="flex items-center justify-between gap-3">
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                              Toplam {total} oy
+                              {pluralize(total, "vote")} total
                             </p>
                             <Button
                               variant={isActive ? "secondary" : "primary"}
@@ -352,7 +352,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
                               onClick={() => handleToggle(poll)}
                               disabled={busyPollId === poll.id}
                             >
-                              {isActive ? "Kapat" : "Aktif et"}
+                              {isActive ? "Close" : "Activate"}
                             </Button>
                           </div>
                         </Card>
@@ -365,15 +365,15 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
 
             <section className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">Sorular</h2>
+                <h2 className="text-xl font-semibold">Questions</h2>
                 {questions.length > 0 && <Badge>{questions.length}</Badge>}
               </div>
               {questions.length === 0 ? (
                 <Card>
                   <EmptyState
                     icon={<MessageIcon className="h-6 w-6" />}
-                    title="Henüz soru yok"
-                    hint="Katılımcılar soru sorduğunda burada anında görünür."
+                    title="No questions yet"
+                    hint="Participants' questions will appear here instantly."
                   />
                 </Card>
               ) : (

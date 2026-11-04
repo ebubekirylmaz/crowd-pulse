@@ -40,8 +40,8 @@ export default function Join() {
         if (cancelled) return;
         setLoadError(
           error instanceof ApiError && error.status === 404
-            ? "Oda bulunamadı"
-            : "Bir sorun oluştu, sayfayı yenileyip tekrar dene",
+            ? "Room not found"
+            : "Something went wrong, refresh the page and try again",
         );
       })
       .finally(() => {
@@ -68,8 +68,8 @@ export default function Join() {
       .catch((error) => {
         setSubmitError(
           error instanceof ApiError && error.status === 404
-            ? "Oda bulunamadı"
-            : "Katılamadın, tekrar dene",
+            ? "Room not found"
+            : "Couldn't join, try again",
         );
       })
       .finally(() => setSubmitting(false));
@@ -84,24 +84,27 @@ export default function Join() {
         <Card className="w-full">
           <EmptyState
             icon={<PulseIcon className="h-6 w-6" />}
-            title={loadError ?? "Oda bulunamadı"}
-            hint="Linki ya da oda kodunu kontrol edip tekrar dene."
+            title={loadError ?? "Room not found"}
+            hint="Check the link or room code and try again."
           />
         </Card>
       ) : (
         <Card className="w-full animate-fade-in">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Odaya katılıyorsun
+            You're joining
           </p>
           <h1 className="mt-1 mb-6 text-2xl font-bold tracking-tight">
             {room.title}
           </h1>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <Field label="Adın" hint="Sorularında diğer katılımcılar bu adı görür.">
+            <Field
+              label="Your name"
+              hint="Other participants will see this name next to your questions."
+            >
               <TextInput
                 type="text"
                 maxLength={40}
-                placeholder="Örn. Ayşe"
+                placeholder="e.g. Alex"
                 autoComplete="nickname"
                 autoFocus
                 value={displayName}
@@ -114,14 +117,14 @@ export default function Join() {
               fullWidth
               disabled={submitting || displayName.trim() === ""}
             >
-              {submitting ? "Katılıyor..." : "Katıl"}
+              {submitting ? "Joining..." : "Join"}
             </Button>
             {submitError && <Alert>{submitError}</Alert>}
           </form>
         </Card>
       )}
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        Hesap gerekmez · Oda kodu {code.toUpperCase()}
+        No account needed · Room code {code.toUpperCase()}
       </p>
     </GradientScreen>
   );

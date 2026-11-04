@@ -46,7 +46,7 @@ export default function HostDashboard() {
           expire();
           return;
         }
-        setLoadError("Odalar yüklenemedi, sayfayı yenileyip tekrar dene");
+        setLoadError("Couldn't load rooms, refresh the page and try again");
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -71,7 +71,7 @@ export default function HostDashboard() {
         expire();
         return;
       }
-      setCreateError("Oda oluşturulamadı, tekrar dene");
+      setCreateError("Couldn't create the room, try again");
     } finally {
       setCreating(false);
     }
@@ -95,15 +95,15 @@ export default function HostDashboard() {
         right={
           <Button variant="ghost" size="sm" onClick={expire}>
             <LogOutIcon />
-            Çıkış yap
+            Log out
           </Button>
         }
       />
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Odalarım</h1>
+          <h1 className="text-3xl font-bold tracking-tight">My rooms</h1>
           <p className="mt-1 text-slate-500 dark:text-slate-400">
-            Yeni bir oda aç ve katılımcılarla paylaş.
+            Create a room and share it with your participants.
           </p>
         </div>
 
@@ -115,8 +115,8 @@ export default function HostDashboard() {
             <TextInput
               type="text"
               maxLength={100}
-              placeholder="Yeni oda başlığı, örn. Haftalık toplantı"
-              aria-label="Oda başlığı"
+              placeholder="New room title, e.g. Weekly meeting"
+              aria-label="Room title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
@@ -125,7 +125,7 @@ export default function HostDashboard() {
               disabled={creating || title.trim() === ""}
               className="shrink-0 sm:w-auto"
             >
-              {creating ? "Oluşturuluyor..." : "Oda oluştur"}
+              {creating ? "Creating..." : "Create room"}
             </Button>
           </form>
           {createError && (
@@ -145,8 +145,8 @@ export default function HostDashboard() {
           <Card>
             <EmptyState
               icon={<PulseIcon className="h-6 w-6" />}
-              title="Henüz oda yok"
-              hint="Yukarıdan ilk odanı oluştur, katılım linki ve QR kodu hemen hazır olur."
+              title="No rooms yet"
+              hint="Create your first room above, the join link and QR code are ready instantly."
             />
           </Card>
         ) : (
@@ -174,7 +174,7 @@ export default function HostDashboard() {
                       to={`/host/rooms/${room.code}`}
                       className={buttonStyles({ size: "sm" })}
                     >
-                      Yönet
+                      Manage
                     </Link>
                     <Button
                       variant="secondary"
@@ -182,7 +182,7 @@ export default function HostDashboard() {
                       onClick={() => handleCopy(room.code)}
                     >
                       {copiedCode === room.code ? <CheckIcon /> : <CopyIcon />}
-                      {copiedCode === room.code ? "Kopyalandı" : "Linki kopyala"}
+                      {copiedCode === room.code ? "Copied" : "Copy link"}
                     </Button>
                   </div>
                 </Card>

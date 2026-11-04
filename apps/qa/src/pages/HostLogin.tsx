@@ -17,18 +17,18 @@ type Mode = "login" | "register";
 
 function errorMessage(error: unknown) {
   if (error instanceof ApiError) {
-    if (error.status === 401) return "E-posta ya da parola hatalı";
-    if (error.status === 409) return "Bu e-posta zaten kayıtlı";
+    if (error.status === 401) return "Invalid email or password";
+    if (error.status === 409) return "This email is already registered";
     if (error.status === 400) {
-      return "Geçerli bir e-posta ve en az 8 karakterlik parola gir";
+      return "Enter a valid email and a password of at least 8 characters";
     }
   }
-  return "Bir sorun oluştu, tekrar dene";
+  return "Something went wrong, try again";
 }
 
 const TABS: { mode: Mode; label: string }[] = [
-  { mode: "login", label: "Giriş yap" },
-  { mode: "register", label: "Kayıt ol" },
+  { mode: "login", label: "Log in" },
+  { mode: "register", label: "Sign up" },
 ];
 
 export default function HostLogin() {
@@ -68,9 +68,9 @@ export default function HostLogin() {
     <GradientScreen>
       <Logo />
       <Card className="w-full animate-fade-in">
-        <h1 className="text-2xl font-bold tracking-tight">Host paneli</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Host dashboard</h1>
         <p className="mt-1 mb-5 text-sm text-slate-500 dark:text-slate-400">
-          Oda aç, anket başlat, soruları canlı takip et.
+          Open rooms, start polls and follow questions live.
         </p>
 
         <div
@@ -100,19 +100,19 @@ export default function HostLogin() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Field label="E-posta">
+          <Field label="Email">
             <TextInput
               type="email"
               required
               autoComplete="email"
-              placeholder="ornek@mail.com"
+              placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </Field>
           <Field
-            label="Parola"
-            hint={isLogin ? undefined : "En az 8 karakter"}
+            label="Password"
+            hint={isLogin ? undefined : "At least 8 characters"}
           >
             <TextInput
               type="password"
@@ -125,7 +125,11 @@ export default function HostLogin() {
             />
           </Field>
           <Button type="submit" size="lg" fullWidth disabled={submitting}>
-            {submitting ? "Bekle..." : isLogin ? "Giriş yap" : "Hesap oluştur"}
+            {submitting
+              ? "Please wait..."
+              : isLogin
+                ? "Log in"
+                : "Create account"}
           </Button>
           {error && <Alert>{error}</Alert>}
         </form>

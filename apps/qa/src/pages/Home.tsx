@@ -25,21 +25,22 @@ export default function Home() {
     <GradientScreen>
       <Logo />
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight">
-          Canlı soru-cevap ve anket
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">Live Q&A and polls</h1>
         <p className="mt-2 text-slate-600 dark:text-slate-400">
-          Tek bir kodla odaya katıl, oy ver, soru sor. Sonuçlar anında
-          güncellenir.
+          Join a room with a single code, vote and ask questions. Results update
+          instantly.
         </p>
       </div>
       <Card className="w-full">
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Field label="Oda kodu" hint="Host'un paylaştığı kodu ya da QR'ı kullan.">
+          <Field
+            label="Room code"
+            hint="Use the code or QR shared by the host."
+          >
             <TextInput
               type="text"
               maxLength={12}
-              placeholder="Örn. F7R28W"
+              placeholder="e.g. F7R28W"
               autoCapitalize="characters"
               autoComplete="off"
               spellCheck={false}
@@ -54,7 +55,7 @@ export default function Home() {
             fullWidth
             disabled={code.trim() === ""}
           >
-            Odaya katıl
+            Join room
           </Button>
         </form>
       </Card>
@@ -62,7 +63,7 @@ export default function Home() {
         to="/host/login"
         className={buttonStyles({ variant: "ghost", size: "sm" })}
       >
-        Oda mı açmak istiyorsun? Host girişi
+        Want to host a room? Host login
       </Link>
     </GradientScreen>
   );
