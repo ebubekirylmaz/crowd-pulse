@@ -4,7 +4,7 @@
 
 A live Q&A and polling platform, a lightweight privacy-friendly analytics tool, and a micro-frontend shell that ties them together as independently deployed modules.
 
-**Live demo:** [crowpulseqa.vercel.app](https://crowpulseqa.vercel.app) · **Demo video:** _coming soon_ · **Architecture decisions:** _coming soon_
+**Live demo:** [crowpulseqa.vercel.app](https://crowpulseqa.vercel.app) · **Demo video:** _coming soon_ · **Architecture decisions:** [`docs/adr`](./docs/adr)
 
 ---
 
@@ -17,8 +17,9 @@ Work in progress, built in public as a portfolio project.
 | Live Q&A and polling     | Working end to end and deployed (Vercel for the web app, Railway for the API, Postgres and Redis) |
 | Host tools               | Presenter mode, question moderation (answered state), anonymous questions |
 | Demo                     | One-click throwaway demo room, no sign-up                              |
-| Automated tests and CI   | 12 API integration tests, run with typecheck and a web build on every push |
-| Redis pub/sub fan-out    | Planned (Redis is currently used for the health check and demo rate limiting) |
+| Automated tests and CI   | 15 API integration tests, run with typecheck and a web build on every push |
+| Redis pub/sub fan-out    | Done: Socket.IO Redis adapter, tested with two API instances |
+| Load test                | 5,000 connections in one room, p95 vote-to-screen under 200 ms (see below) |
 | Analytics                | Planned                                                                |
 | Micro-frontend shell     | Planned                                                                |
 
@@ -197,6 +198,16 @@ The tests use a separate `crowd_pulse_test` database that is created and migrate
 
 The same checks run in GitHub Actions on every push (`.github/workflows/ci.yml`) against Postgres and Redis service containers: the API typecheck and tests, and a production build of the web app.
 
+### Running the load test
+
+Start the API (for example `npm run dev`), then in another terminal:
+
+```bash
+npm run loadtest -w services/api -- --url http://localhost:3000 --participants 1000 --window 3000
+```
+
+The script creates a throwaway demo room, joins the requested number of participants over REST, connects them over WebSocket, makes each of them vote once at a random moment inside the window (in milliseconds), and reports connection time, vote acknowledgement latency, the time until the host sees each vote, and whether the accepted, broadcast and stored totals match. It needs the demo endpoint, so it is limited by `DEMO_LIMIT_PER_HOUR` per IP.
+
 ### Environment variables
 
 | Variable                                      | Description                                                              |
@@ -214,30 +225,36 @@ The same checks run in GitHub Actions on every push (`.github/workflows/ci.yml`)
 
 ## Performance and measurements
 
-Numbers will be filled in from real test runs, not estimates.
+Numbers come from real test runs, not estimates. The realtime numbers were measured with `npm run loadtest -w services/api` against a single API instance. The API, Postgres, Redis and the load generator all ran on one laptop (Apple M2, 8 cores, Node 24), and the load generator is a single Node process sharing that CPU, so treat these as a conservative floor for the server and not as a production benchmark.
 
 | Metric                                         | Target     | Result |
 | ---------------------------------------------- | ---------- | ------ |
-| Concurrent WebSocket connections in one room   | _TBD_      | _TBD_  |
-| Vote to host-screen latency (p95)              | under 1 s  | _TBD_  |
+| Concurrent WebSocket connections in one room   | n/a        | 5,000 connected, 0 failures |
+| Vote to host-screen latency (p95)              | under 1 s  | 158 ms (1,000 voters in 3 s), 182 ms (5,000 voters in 5 s) |
+| Vote acknowledgement latency (p95)             | n/a        | 17 ms (1,000 voters in 3 s), 59 ms (5,000 voters in 5 s) |
 | Analytics snippet size (gzipped)               | under 2 KB | _TBD_  |
 | Ingest throughput (events/sec)                 | _TBD_      | _TBD_  |
 | Dashboard query time (p95) over synthetic data | _TBD_      | _TBD_  |
 | Shell + remotes bundle sizes                   | _TBD_      | _TBD_  |
 
+The first run, before result broadcasts were throttled, showed a p95 vote-to-screen time of 901 ms with 1,000 voters and 1,980 ms when they all voted within half a second. Every vote was broadcast to the whole room, so the work grew with the square of the audience. Throttling the broadcasts brought those cases down to 158 ms and 151 ms, with all totals still matching exactly. The investigation and the trade-off are written up in [ADR 0004](./docs/adr/0004-throttle-result-broadcasts.md).
+
 ## Architecture decision records
 
-Planned ADRs, written as the decisions are made:
+Written so far, in [`docs/adr`](./docs/adr):
 
-1. Why Socket.IO and Redis pub/sub for realtime fan-out
-2. Vote counting: Redis counters with periodic Postgres persistence
-3. Anonymous participant identity and duplicate-vote prevention
-4. Raw events plus rollup tables vs. live aggregation, and when ClickHouse would make sense
-5. Cookieless unique visitor counting with a rotating salt
-6. Why Module Federation (and why not iframes or a single app)
-7. Shared state between remotes: event-based instead of a global store
+1. [Socket.IO with a Redis adapter for realtime fan-out](./docs/adr/0001-socketio-with-redis-adapter.md)
+2. [One vote per participant, enforced by the database](./docs/adr/0002-one-vote-enforced-by-the-database.md)
+3. [Plain SQL migrations applied at startup under an advisory lock](./docs/adr/0003-sql-migrations-at-startup.md)
+4. [Throttle poll result broadcasts to one per 150 ms per poll](./docs/adr/0004-throttle-result-broadcasts.md)
 
-Decisions already visible in the code and still to be written up: plain SQL migrations instead of an ORM, database constraints (not application checks) for the one-vote and one-active-poll rules, and storing the host JWT in `localStorage` for v1 versus an `httpOnly` cookie.
+Planned, written as the decisions are made:
+
+- Raw events plus rollup tables vs. live aggregation, and when ClickHouse would make sense
+- Cookieless unique visitor counting with a rotating salt
+- Why Module Federation (and why not iframes or a single app)
+- Shared state between remotes: event-based instead of a global store
+- Host token storage: `localStorage` for v1 versus an `httpOnly` cookie
 
 ## Roadmap
 
@@ -251,7 +268,8 @@ Decisions already visible in the code and still to be written up: plain SQL migr
 - [x] First deployment with a public demo room
 - [x] Presenter mode, anonymous questions, answered state, landing page, link previews
 - [x] GitHub Actions CI: typecheck, API tests against Postgres and Redis, web build
-- [ ] Redis pub/sub adapter for multi-instance fan-out
+- [x] Redis pub/sub adapter for multi-instance fan-out, covered by two-instance tests
+- [x] Realtime load test and measurements, with ADRs for the decisions behind them
 
 **Week 2: Analytics**
 
