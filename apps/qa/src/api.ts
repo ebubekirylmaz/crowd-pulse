@@ -83,6 +83,8 @@ export const api = {
     request<ActivePoll>(`/rooms/${code}/polls/active`),
   getQuestions: (code: string) =>
     request<Question[]>(`/rooms/${code}/questions`),
+  startDemo: () =>
+    request<{ token: string; code: string }>("/demo", { method: "POST" }),
   login: (email: string, password: string) =>
     request<{ token: string }>("/auth/login", {
       method: "POST",

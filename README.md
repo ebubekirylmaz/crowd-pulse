@@ -40,6 +40,8 @@ Most portfolio apps are a single frontend talking to a single API. This project 
 - One vote per participant per poll and one upvote per question, enforced in the database
 - Host manages polls from a dashboard: create, activate, close, and watch live results
 - Presenter mode for projectors: full-screen live results, big QR code and room code, top open questions
+- One-click demo: creates a throwaway host with a ready room, poll and sample questions, rate limited per IP and deleted after 24 hours
+- Landing page with a how-it-works section and link previews (Open Graph) for sharing
 
 ### Analytics _(planned)_
 
@@ -106,6 +108,7 @@ The Q&A module talks to the realtime API. The analytics snippet embedded in Q&A 
 | `POST /polls/:id/close`          | host        | Close a poll                                         |
 | `GET /rooms/:code/questions`     | public      | Questions sorted by upvotes                          |
 | `POST /questions/:id/answered`   | host        | Mark a question answered or reopen it                |
+| `POST /demo`                     | public      | Create a temporary demo host, room and poll (rate limited) |
 | `GET /health`                    | public      | Postgres and Redis status                            |
 
 Socket events: `vote:cast`, `question:ask` and `question:upvote` from participants; `poll:activated`, `poll:closed`, `poll:results`, `question:new` and `question:updated` from the server.
@@ -200,6 +203,8 @@ The tests use a separate `crowd_pulse_test` database that is created and migrate
 | `CORS_ORIGIN`                                 | Optional. Allowed web origin, defaults to `http://localhost:5173`        |
 | `PORT`                                        | Optional. API port, defaults to `3000`                                   |
 | `VITE_API_URL`                                | Optional, web app. API base URL, defaults to `http://localhost:3000`     |
+| `VITE_SITE_URL`                               | Web app. Public site address used in link previews, set in `apps/qa/.env.production` |
+| `DEMO_LIMIT_PER_HOUR`                         | Optional. Demo rooms allowed per IP per hour, defaults to `5`            |
 | `ANALYTICS_SALT_ROTATION`                     | Planned: rotation period for the salt used in cookieless visitor hashing |
 
 ## Performance and measurements

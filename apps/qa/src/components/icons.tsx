@@ -74,6 +74,29 @@ export const PulseIcon = ({ className }: IconProps) => (
   </Icon>
 );
 
+export const UsersIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+  </Icon>
+);
+
+export const BoltIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <path d="M13 2 3 14h9l-1 8 10-12h-9z" />
+  </Icon>
+);
+
+export const EyeOffIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+    <path d="m2 2 20 20" />
+  </Icon>
+);
+
 export const PresentIcon = ({ className }: IconProps) => (
   <Icon className={className}>
     <rect x="2" y="3" width="20" height="14" rx="2" />
