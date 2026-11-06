@@ -1,7 +1,13 @@
 import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
-import { api, ApiError, type HostPoll, type PollStatus } from "../api";
+import {
+  api,
+  ApiError,
+  type HostPoll,
+  type PollStatus,
+  type Question,
+} from "../api";
 import { clearToken, loadToken } from "../hostAuth";
 import { useHostRoom } from "../hooks/useHostRoom";
 import { usePageTitle } from "../hooks/usePageTitle";
@@ -67,6 +73,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
   const [creating, setCreating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [busyPollId, setBusyPollId] = useState<string | null>(null);
+  const [busyQuestionId, setBusyQuestionId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   usePageTitle(roomTitle);
 
@@ -119,6 +126,22 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
       setMessage("Couldn't create the poll, try again");
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function handleAnswered(question: Question) {
+    setBusyQuestionId(question.id);
+    setMessage(null);
+    try {
+      await api.markQuestionAnswered(token, question.id, !question.answered);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        expire();
+        return;
+      }
+      setMessage("Couldn't update the question, try again");
+    } finally {
+      setBusyQuestionId(null);
     }
   }
 
@@ -415,18 +438,33 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
                   {questions.map((q) => (
                     <li
                       key={q.id}
-                      className="flex animate-slide-in items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                      className={cx(
+                        "flex animate-slide-in items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900",
+                        q.answered && "opacity-70",
+                      )}
                     >
                       <div className="flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 dark:border-slate-700 dark:text-slate-300">
                         <ChevronUpIcon className="h-4 w-4" />
                         <span className="tabular-nums">{q.upvotes}</span>
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="break-words text-base">{q.body}</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                          {q.displayName} · {timeAgo(q.createdAt)}
+                        <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          <span>
+                            {q.displayName} · {timeAgo(q.createdAt)}
+                          </span>
+                          {q.answered && <Badge tone="success">Answered</Badge>}
                         </p>
                       </div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleAnswered(q)}
+                        disabled={busyQuestionId === q.id}
+                        className="shrink-0"
+                      >
+                        {q.answered ? "Reopen" : "Mark answered"}
+                      </Button>
                     </li>
                   ))}
                 </ul>

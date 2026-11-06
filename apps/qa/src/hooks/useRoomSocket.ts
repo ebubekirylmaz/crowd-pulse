@@ -105,7 +105,8 @@ export function useRoomSocket(code: string, sessionToken: string) {
     activePoll,
     questions,
     vote: (optionId: string) => emit("vote:cast", { optionId }),
-    ask: (body: string) => emit("question:ask", { body }),
+    ask: (body: string, anonymous = false) =>
+      emit("question:ask", { body, anonymous }),
     upvote: (questionId: string) => emit("question:upvote", { questionId }),
   };
 }

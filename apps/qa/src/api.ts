@@ -56,6 +56,7 @@ export type Question = {
   displayName: string;
   createdAt: string;
   upvotes: number;
+  answered: boolean;
 };
 
 export type HostRoom = Room & { createdAt: string };
@@ -119,6 +120,12 @@ export const api = {
     request<unknown>(`/polls/${pollId}/activate`, {
       method: "POST",
       headers: bearer(token),
+    }),
+  markQuestionAnswered: (token: string, questionId: string, answered: boolean) =>
+    request<Question>(`/questions/${questionId}/answered`, {
+      method: "POST",
+      headers: bearer(token),
+      body: JSON.stringify({ answered }),
     }),
   closePoll: (token: string, pollId: string) =>
     request<unknown>(`/polls/${pollId}/close`, {

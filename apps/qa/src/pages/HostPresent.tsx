@@ -80,7 +80,8 @@ function PresentView({ code, token }: { code: string; token: string }) {
     polls.find((poll) => poll.status === "active") ??
     polls.find((poll) => poll.status === "closed") ??
     null;
-  const topQuestions = questions.slice(0, TOP_QUESTION_COUNT);
+  const openQuestions = questions.filter((question) => !question.answered);
+  const topQuestions = openQuestions.slice(0, TOP_QUESTION_COUNT);
 
   if (notFound) {
     return (
@@ -171,7 +172,7 @@ function PresentView({ code, token }: { code: string; token: string }) {
           <Card className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Top questions</h2>
-              {questions.length > 0 && <Badge>{questions.length}</Badge>}
+              {openQuestions.length > 0 && <Badge>{openQuestions.length}</Badge>}
             </div>
             {topQuestions.length === 0 ? (
               <p className="text-slate-500 dark:text-slate-400">

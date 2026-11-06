@@ -11,6 +11,7 @@ import {
   saveVote,
 } from "../lib/choices";
 import { percentOf, pluralize, timeAgo } from "../lib/format";
+import { orderQuestions, type QuestionOrder } from "../lib/sortQuestions";
 import {
   Alert,
   Badge,
@@ -27,6 +28,11 @@ import {
 import { CheckIcon, ChevronUpIcon, MessageIcon, PulseIcon } from "../components/icons";
 
 const MAX_QUESTION_LENGTH = 300;
+
+const ORDERS: { value: QuestionOrder; label: string }[] = [
+  { value: "top", label: "Top" },
+  { value: "newest", label: "Newest" },
+];
 
 export default function Room() {
   const { code } = useParams();
@@ -73,6 +79,8 @@ function RoomView({
     () => new Set(loadUpvotes(code)),
   );
   const [draft, setDraft] = useState("");
+  const [anonymous, setAnonymous] = useState(false);
+  const [order, setOrder] = useState<QuestionOrder>("top");
   const [asking, setAsking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   usePageTitle(room?.title);
@@ -120,7 +128,7 @@ function RoomView({
     const body = draft.trim();
     if (!body) return;
     setAsking(true);
-    const result = await ask(body);
+    const result = await ask(body, anonymous);
     setAsking(false);
     if (result.ok) {
       setDraft("");
@@ -249,7 +257,33 @@ function RoomView({
             <h2 id="questions-heading" className="text-lg font-semibold">
               Questions
             </h2>
-            {questions.length > 0 && <Badge>{questions.length}</Badge>}
+            <div className="flex items-center gap-2">
+              {questions.length > 1 && (
+                <div
+                  role="group"
+                  aria-label="Sort questions"
+                  className="grid grid-cols-2 gap-1 rounded-lg bg-slate-100 p-1 text-xs font-medium dark:bg-slate-800"
+                >
+                  {ORDERS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      aria-pressed={order === option.value}
+                      onClick={() => setOrder(option.value)}
+                      className={cx(
+                        "rounded-md px-3 py-1 transition",
+                        order === option.value
+                          ? "bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-100"
+                          : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200",
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {questions.length > 0 && <Badge>{questions.length}</Badge>}
+            </div>
           </div>
 
           <Card>
@@ -262,6 +296,15 @@ function RoomView({
                 placeholder="Ask something you're curious about..."
                 aria-label="Write your question"
               />
+              <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={anonymous}
+                  onChange={(e) => setAnonymous(e.target.checked)}
+                  className="h-4 w-4 rounded border-slate-300 accent-brand-600"
+                />
+                Ask anonymously
+              </label>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs tabular-nums text-slate-500">
                   {draft.length}/{MAX_QUESTION_LENGTH}
@@ -288,12 +331,15 @@ function RoomView({
             </Card>
           ) : (
             <ul className="flex flex-col gap-3">
-              {questions.map((question) => {
+              {orderQuestions(questions, order).map((question) => {
                 const isUpvoted = upvoted.has(question.id);
                 return (
                   <li
                     key={question.id}
-                    className="flex animate-slide-in items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                    className={cx(
+                      "flex animate-slide-in items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900",
+                      question.answered && "opacity-70",
+                    )}
                   >
                     <button
                       onClick={() => handleUpvote(question.id)}
@@ -311,8 +357,13 @@ function RoomView({
                     </button>
                     <div className="min-w-0">
                       <p className="break-words text-base">{question.body}</p>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        {question.displayName} · {timeAgo(question.createdAt)}
+                      <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                        <span>
+                          {question.displayName} · {timeAgo(question.createdAt)}
+                        </span>
+                        {question.answered && (
+                          <Badge tone="success">Answered</Badge>
+                        )}
                       </p>
                     </div>
                   </li>
