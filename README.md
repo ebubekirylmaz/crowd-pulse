@@ -1,8 +1,10 @@
 # Crowd Pulse
 
+[![CI](https://github.com/ebubekirylmaz/crowd-pulse/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ebubekirylmaz/crowd-pulse/actions/workflows/ci.yml)
+
 A live Q&A and polling platform, a lightweight privacy-friendly analytics tool, and a micro-frontend shell that ties them together as independently deployed modules.
 
-**Live demo:** _coming soon_ · **Demo video:** _coming soon_ · **Architecture decisions:** _coming soon_
+**Live demo:** [crowpulseqa.vercel.app](https://crowpulseqa.vercel.app) · **Demo video:** _coming soon_ · **Architecture decisions:** _coming soon_
 
 ---
 
@@ -10,14 +12,15 @@ A live Q&A and polling platform, a lightweight privacy-friendly analytics tool, 
 
 Work in progress, built in public as a portfolio project.
 
-| Part                     | State                                                    |
-| ------------------------ | -------------------------------------------------------- |
-| Live Q&A and polling     | Working end to end locally (host and participant flows)  |
-| API integration tests    | 8 tests covering auth, ownership, voting and questions   |
-| Redis pub/sub fan-out    | Planned (Redis is currently used for the health check)   |
-| Deployment and demo room | Planned                                                  |
-| Analytics                | Planned                                                  |
-| Micro-frontend shell     | Planned                                                  |
+| Part                     | State                                                                  |
+| ------------------------ | ---------------------------------------------------------------------- |
+| Live Q&A and polling     | Working end to end and deployed (Vercel for the web app, Railway for the API, Postgres and Redis) |
+| Host tools               | Presenter mode, question moderation (answered state), anonymous questions |
+| Demo                     | One-click throwaway demo room, no sign-up                              |
+| Automated tests and CI   | 12 API integration tests, run with typecheck and a web build on every push |
+| Redis pub/sub fan-out    | Planned (Redis is currently used for the health check and demo rate limiting) |
+| Analytics                | Planned                                                                |
+| Micro-frontend shell     | Planned                                                                |
 
 ## Why this project
 
@@ -192,6 +195,8 @@ npm test
 
 The tests use a separate `crowd_pulse_test` database that is created and migrated automatically, and they refuse to run against any database whose name does not end in `_test`.
 
+The same checks run in GitHub Actions on every push (`.github/workflows/ci.yml`) against Postgres and Redis service containers: the API typecheck and tests, and a production build of the web app.
+
 ### Environment variables
 
 | Variable                                      | Description                                                              |
@@ -242,9 +247,11 @@ Decisions already visible in the code and still to be written up: plain SQL migr
 - [x] WebSocket rooms, vote and question events
 - [x] Host view and participant view (mobile first)
 - [x] Live results, duplicate-vote prevention, API integration tests
+- [x] Reconnect polish: a participant's own vote and upvotes are restored after a refresh (stored per browser)
+- [x] First deployment with a public demo room
+- [x] Presenter mode, anonymous questions, answered state, landing page, link previews
+- [x] GitHub Actions CI: typecheck, API tests against Postgres and Redis, web build
 - [ ] Redis pub/sub adapter for multi-instance fan-out
-- [ ] Reconnect polish: restore a participant's own vote and upvote state after a refresh
-- [ ] First deployment with a public demo room
 
 **Week 2: Analytics**
 
