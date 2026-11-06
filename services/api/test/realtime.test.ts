@@ -4,6 +4,7 @@ import type { Socket } from "socket.io-client";
 import { buildApp } from "../src/app.js";
 import {
   activatePoll,
+  bearer,
   connectSocket,
   createPoll,
   createRoom,
@@ -114,5 +115,62 @@ describe("questions", () => {
     expect(crossRoom).toEqual({ ok: false, error: "question_not_found" });
     expect(own.ok).toBe(true);
     expect(again).toEqual({ ok: false, error: "already_upvoted" });
+  });
+});
+
+describe("question moderation", () => {
+  it("hides the author of anonymous questions", async () => {
+    const token = await registerHost(app, "host@example.com");
+    const room = await createRoom(app, token);
+    const ali = await joinRoom(app, room.code, "Ali");
+
+    const host = await connect({ token, roomCode: room.code });
+    const aliSocket = await connect({ sessionToken: ali.sessionToken });
+
+    const broadcast = waitForEvent<{ displayName: string }>(
+      host,
+      "question:new",
+    );
+    await emitWithAck(aliSocket, "question:ask", {
+      body: "Who am I?",
+      anonymous: true,
+    });
+
+    expect((await broadcast).displayName).toBe("Anonymous");
+  });
+
+  it("lets only the room owner mark a question as answered", async () => {
+    const owner = await registerHost(app, "owner@example.com");
+    const other = await registerHost(app, "other@example.com");
+    const room = await createRoom(app, owner);
+    const ali = await joinRoom(app, room.code, "Ali");
+
+    const host = await connect({ token: owner, roomCode: room.code });
+    const aliSocket = await connect({ sessionToken: ali.sessionToken });
+    const asked = await emitWithAck<{
+      ok: boolean;
+      question: { id: string };
+    }>(aliSocket, "question:ask", { body: "Why?" });
+
+    const denied = await app.inject({
+      method: "POST",
+      url: `/questions/${asked.question.id}/answered`,
+      headers: bearer(other),
+      payload: { answered: true },
+    });
+    const updated = waitForEvent<{ answered: boolean }>(
+      host,
+      "question:updated",
+    );
+    const allowed = await app.inject({
+      method: "POST",
+      url: `/questions/${asked.question.id}/answered`,
+      headers: bearer(owner),
+      payload: { answered: true },
+    });
+
+    expect(denied.statusCode).toBe(404);
+    expect(allowed.statusCode).toBe(200);
+    expect((await updated).answered).toBe(true);
   });
 });

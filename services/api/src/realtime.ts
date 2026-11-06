@@ -12,6 +12,7 @@ const voteCastSchema = z.object({
 
 const questionAskSchema = z.object({
   body: z.string().trim().min(1).max(300),
+  anonymous: z.boolean().optional(),
 });
 
 const questionUpvoteSchema = z.object({
@@ -119,7 +120,7 @@ export function setupRealtime(app: FastifyInstance) {
           return ack({ ok: false, error: "invalid_input" });
         }
         const [inserted] =
-          await sql`insert into questions (room_id, participant_id, body) values (${socket.data.roomId}, ${socket.data.participantId}, ${parsedData.body}) returning id`;
+          await sql`insert into questions (room_id, participant_id, body, anonymous) values (${socket.data.roomId}, ${socket.data.participantId}, ${parsedData.body}, ${parsedData.anonymous ?? false}) returning id`;
         const question = await getQuestion(inserted.id);
         io.to(`room:${socket.data.roomId}`).emit("question:new", question);
         ack({ ok: true, question });

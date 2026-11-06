@@ -35,9 +35,11 @@ Most portfolio apps are a single frontend talking to a single API. This project 
 - Host signs up, creates a room and gets a join link and QR code
 - Participants join from their phone with just a display name, no account needed
 - One active poll per room (enforced by a partial unique index), results update live without page refresh
-- Participants submit questions and upvote them, the most upvoted rise to the top
+- Participants submit questions (optionally anonymously) and upvote them, the most upvoted rise to the top, with a Top / Newest toggle
+- Host marks questions as answered, answered questions sink and show an Answered badge
 - One vote per participant per poll and one upvote per question, enforced in the database
 - Host manages polls from a dashboard: create, activate, close, and watch live results
+- Presenter mode for projectors: full-screen live results, big QR code and room code, top open questions
 
 ### Analytics _(planned)_
 
@@ -103,6 +105,7 @@ The Q&A module talks to the realtime API. The analytics snippet embedded in Q&A 
 | `POST /polls/:id/activate`       | host        | Activate a poll, closing the previous active one     |
 | `POST /polls/:id/close`          | host        | Close a poll                                         |
 | `GET /rooms/:code/questions`     | public      | Questions sorted by upvotes                          |
+| `POST /questions/:id/answered`   | host        | Mark a question answered or reopen it                |
 | `GET /health`                    | public      | Postgres and Redis status                            |
 
 Socket events: `vote:cast`, `question:ask` and `question:upvote` from participants; `poll:activated`, `poll:closed`, `poll:results`, `question:new` and `question:updated` from the server.

@@ -6,6 +6,7 @@ import { corsOrigin } from "./config.js";
 import jwt from "@fastify/jwt";
 import participantRoutes from "./routes/participants.js";
 import pollRoutes from "./routes/polls.js";
+import questionRoutes from "./routes/questions.js";
 import { redis } from "./redis.js";
 import roomRoutes from "./routes/rooms.js";
 import { setupRealtime } from "./realtime.js";
@@ -40,6 +41,7 @@ export function buildApp() {
   app.register(roomRoutes);
   app.register(participantRoutes);
   app.register(pollRoutes);
+  app.register(questionRoutes);
 
   setupRealtime(app);
 
