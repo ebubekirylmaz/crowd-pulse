@@ -1,7 +1,11 @@
 import { defineConfig } from "vitest/config";
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-process.loadEnvFile(fileURLToPath(new URL("../../.env", import.meta.url)));
+const envFile = fileURLToPath(new URL("../../.env", import.meta.url));
+if (existsSync(envFile)) {
+  process.loadEnvFile(envFile);
+}
 
 const baseUrl = process.env.DATABASE_URL ?? "";
 process.env.ADMIN_DATABASE_URL = baseUrl.replace(/\/[^/]*$/, "/postgres");
