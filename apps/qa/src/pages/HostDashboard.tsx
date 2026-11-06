@@ -2,6 +2,7 @@ import { type FormEvent, useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError, type HostRoom } from "../api";
 import { clearToken, loadToken } from "../hostAuth";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { formatDate } from "../lib/format";
 import {
   Alert,
@@ -11,7 +12,7 @@ import {
   Card,
   EmptyState,
   Logo,
-  Spinner,
+  Skeleton,
   TextInput,
   TopBar,
 } from "../components/ui";
@@ -27,6 +28,7 @@ export default function HostDashboard() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  usePageTitle("My rooms");
 
   const expire = useCallback(() => {
     clearToken();
@@ -136,9 +138,20 @@ export default function HostDashboard() {
         </Card>
 
         {loading ? (
-          <div className="flex justify-center py-10">
-            <Spinner className="h-8 w-8" />
-          </div>
+          <ul className="grid gap-4 sm:grid-cols-2" aria-busy="true">
+            {[0, 1, 2, 3].map((n) => (
+              <li key={n}>
+                <Card className="flex flex-col gap-4">
+                  <Skeleton className="h-6 w-2/3" />
+                  <Skeleton className="h-5 w-1/2" />
+                  <div className="flex gap-2">
+                    <Skeleton className="h-9 w-20" />
+                    <Skeleton className="h-9 w-28" />
+                  </div>
+                </Card>
+              </li>
+            ))}
+          </ul>
         ) : loadError ? (
           <Alert>{loadError}</Alert>
         ) : rooms.length === 0 ? (

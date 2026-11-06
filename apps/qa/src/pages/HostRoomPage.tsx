@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { api, ApiError, type HostPoll, type PollStatus } from "../api";
 import { clearToken, loadToken } from "../hostAuth";
 import { useHostRoom } from "../hooks/useHostRoom";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { percentOf, pluralize, timeAgo } from "../lib/format";
 import {
   Alert,
@@ -15,7 +16,7 @@ import {
   EmptyState,
   LiveIndicator,
   Logo,
-  Spinner,
+  Skeleton,
   TextInput,
   TopBar,
 } from "../components/ui";
@@ -67,6 +68,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [busyPollId, setBusyPollId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  usePageTitle(roomTitle);
 
   const expire = useCallback(() => {
     clearToken();
@@ -299,9 +301,21 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
             <section className="flex flex-col gap-3">
               <h2 className="text-xl font-semibold">Polls</h2>
               {loading ? (
-                <div className="flex justify-center py-8">
-                  <Spinner className="h-8 w-8" />
-                </div>
+                <ul className="flex flex-col gap-4" aria-busy="true">
+                  {[0, 1].map((n) => (
+                    <li key={n}>
+                      <Card className="flex flex-col gap-4">
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-11 w-full" />
+                        <Skeleton className="h-11 w-full" />
+                        <div className="flex justify-between">
+                          <Skeleton className="h-5 w-20" />
+                          <Skeleton className="h-8 w-24" />
+                        </div>
+                      </Card>
+                    </li>
+                  ))}
+                </ul>
               ) : polls.length === 0 ? (
                 <Card>
                   <EmptyState

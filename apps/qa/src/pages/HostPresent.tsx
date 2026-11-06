@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { api, type HostPoll } from "../api";
 import { clearToken, loadToken } from "../hostAuth";
 import { useHostRoom } from "../hooks/useHostRoom";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { percentOf, pluralize } from "../lib/format";
 import {
   Badge,
@@ -36,6 +37,7 @@ function PresentView({ code, token }: { code: string; token: string }) {
   const { connected, unauthorized, notFound, loading, polls, questions } =
     useHostRoom(code, token);
   const [roomTitle, setRoomTitle] = useState<string | null>(null);
+  usePageTitle(roomTitle ? `Presenting ${roomTitle}` : null);
 
   const expire = useCallback(() => {
     clearToken();

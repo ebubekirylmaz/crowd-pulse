@@ -15,6 +15,8 @@ type Ack = { ok: boolean; error?: string };
 export function useRoomSocket(code: string, sessionToken: string) {
   const socketRef = useRef<Socket | null>(null);
   const [connected, setConnected] = useState(false);
+  const [hasConnected, setHasConnected] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [unauthorized, setUnauthorized] = useState(false);
   const [activePoll, setActivePoll] = useState<ActivePoll | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -30,15 +32,27 @@ export function useRoomSocket(code: string, sessionToken: string) {
   }, [code]);
 
   useEffect(() => {
-    loadPoll();
-    api
-      .getQuestions(code)
-      .then((list) => setQuestions(sortQuestions(list)))
-      .catch(() => setQuestions([]));
+    let cancelled = false;
+    Promise.all([
+      loadPoll(),
+      api
+        .getQuestions(code)
+        .then((list) => {
+          if (!cancelled) setQuestions(sortQuestions(list));
+        })
+        .catch(() => {
+          if (!cancelled) setQuestions([]);
+        }),
+    ]).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
 
     const socket = io(API_URL, { auth: { sessionToken } });
     socketRef.current = socket;
-    socket.on("connect", () => setConnected(true));
+    socket.on("connect", () => {
+      setConnected(true);
+      setHasConnected(true);
+    });
     socket.on("disconnect", () => setConnected(false));
     socket.on("connect_error", (error) => {
       if (error.message === "unauthorized") setUnauthorized(true);
@@ -63,6 +77,7 @@ export function useRoomSocket(code: string, sessionToken: string) {
       ),
     );
     return () => {
+      cancelled = true;
       socket.disconnect();
       socketRef.current = null;
     };
@@ -84,6 +99,8 @@ export function useRoomSocket(code: string, sessionToken: string) {
 
   return {
     connected,
+    reconnecting: hasConnected && !connected,
+    loading,
     unauthorized,
     activePoll,
     questions,

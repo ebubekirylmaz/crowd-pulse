@@ -229,6 +229,18 @@ export function Spinner({ className = "h-6 w-6" }: { className?: string }) {
   );
 }
 
+export function Skeleton({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={cx(
+        "animate-pulse rounded-xl bg-slate-200 dark:bg-slate-800",
+        className,
+      )}
+    />
+  );
+}
+
 export function Alert({
   children,
   tone = "error",

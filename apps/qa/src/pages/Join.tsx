@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, ApiError, type Room } from "../api";
 import { loadSession, saveSession } from "../session";
+import { usePageTitle } from "../hooks/usePageTitle";
 import {
   Alert,
   Button,
@@ -24,6 +25,7 @@ export default function Join() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  usePageTitle(room ? `Join ${room.title}` : "Join a room");
 
   useEffect(() => {
     if (loadSession(code)) {

@@ -2,6 +2,7 @@ import { type FormEvent, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { api, ApiError } from "../api";
 import { loadToken, saveToken } from "../hostAuth";
+import { usePageTitle } from "../hooks/usePageTitle";
 import {
   Alert,
   Button,
@@ -38,6 +39,7 @@ export default function HostLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  usePageTitle("Host login");
 
   if (loadToken()) {
     return <Navigate to="/host" replace />;

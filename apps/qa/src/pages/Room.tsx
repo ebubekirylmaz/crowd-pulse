@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { api, type Room as RoomInfo } from "../api";
 import { clearSession, loadSession } from "../session";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { useRoomSocket } from "../hooks/useRoomSocket";
 import {
   loadUpvotes,
@@ -19,6 +20,7 @@ import {
   EmptyState,
   LiveIndicator,
   Logo,
+  Skeleton,
   TextArea,
   TopBar,
 } from "../components/ui";
@@ -54,8 +56,17 @@ function RoomView({
   displayName: string;
 }) {
   const navigate = useNavigate();
-  const { connected, unauthorized, activePoll, questions, vote, ask, upvote } =
-    useRoomSocket(code, sessionToken);
+  const {
+    connected,
+    reconnecting,
+    loading,
+    unauthorized,
+    activePoll,
+    questions,
+    vote,
+    ask,
+    upvote,
+  } = useRoomSocket(code, sessionToken);
   const [room, setRoom] = useState<RoomInfo | null>(null);
   const [votes, setVotes] = useState<Record<string, string>>({});
   const [upvoted, setUpvoted] = useState<Set<string>>(
@@ -64,6 +75,7 @@ function RoomView({
   const [draft, setDraft] = useState("");
   const [asking, setAsking] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  usePageTitle(room?.title);
 
   useEffect(() => {
     api
@@ -145,11 +157,16 @@ function RoomView({
           </p>
         </div>
 
+        {reconnecting && (
+          <Alert tone="info">Connection lost. Reconnecting...</Alert>
+        )}
         {message && <Alert>{message}</Alert>}
 
         <section aria-labelledby="poll-heading">
           <Card>
-            {activePoll ? (
+            {loading ? (
+              <PollSkeleton />
+            ) : activePoll ? (
               <div className="flex flex-col gap-4 animate-fade-in">
                 <div className="flex flex-col gap-2">
                   <div>
@@ -209,7 +226,10 @@ function RoomView({
                     );
                   })}
                 </ul>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
+                <p
+                  className="text-sm text-slate-500 dark:text-slate-400"
+                  aria-live="polite"
+                >
                   {hasVoted ? "Your vote is saved · " : ""}
                   {pluralize(totalVotes, "vote")} total
                 </p>
@@ -256,7 +276,9 @@ function RoomView({
             </form>
           </Card>
 
-          {questions.length === 0 ? (
+          {loading ? (
+            <QuestionsSkeleton />
+          ) : questions.length === 0 ? (
             <Card>
               <EmptyState
                 icon={<MessageIcon className="h-6 w-6" />}
@@ -301,5 +323,38 @@ function RoomView({
         </section>
       </main>
     </div>
+  );
+}
+
+function PollSkeleton() {
+  return (
+    <div className="flex flex-col gap-4" aria-busy="true">
+      <Skeleton className="h-5 w-24" />
+      <Skeleton className="h-7 w-3/4" />
+      <div className="flex flex-col gap-2.5">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    </div>
+  );
+}
+
+function QuestionsSkeleton() {
+  return (
+    <ul className="flex flex-col gap-3" aria-busy="true">
+      {[0, 1, 2].map((n) => (
+        <li
+          key={n}
+          className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
+        >
+          <Skeleton className="h-14 w-12 shrink-0" />
+          <div className="flex-1">
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="mt-2 h-4 w-1/3" />
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
