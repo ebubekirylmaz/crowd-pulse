@@ -1,10 +1,14 @@
 import type { FastifyInstance } from "fastify";
 import { Server } from "socket.io";
 import { corsOrigin } from "./config.js";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { createRedisClient } from "./redis.js";
 import { getPollResults } from "./db/pollResults.js";
 import { getQuestion } from "./db/questions.js";
 import { sql } from "./db/index.js";
 import { z } from "zod";
+
+const RESULTS_INTERVAL_MS = 150;
 
 const voteCastSchema = z.object({
   optionId: z.string().uuid(),
@@ -24,7 +28,49 @@ export function setupRealtime(app: FastifyInstance) {
     cors: { origin: corsOrigin },
   });
 
+  const pubClient = createRedisClient();
+  const subClient = createRedisClient();
+  for (const client of [pubClient, subClient]) {
+    client.on("error", (error) =>
+      app.log.warn({ err: error }, "redis adapter connection error"),
+    );
+  }
+  io.adapter(createAdapter(pubClient, subClient));
+
   app.decorate("io", io);
+
+  const resultCooldowns = new Map<string, { dirty: boolean }>();
+
+  async function emitResults(roomId: string, pollId: string) {
+    const options = await getPollResults(pollId);
+    io.to(`room:${roomId}`).emit("poll:results", { pollId, options });
+  }
+
+  function publishResults(roomId: string, pollId: string) {
+    const existing = resultCooldowns.get(pollId);
+    if (existing) {
+      existing.dirty = true;
+      return;
+    }
+    const state = { dirty: false };
+    resultCooldowns.set(pollId, state);
+
+    const run = () => {
+      emitResults(roomId, pollId)
+        .catch((error) => app.log.error(error))
+        .finally(() => {
+          setTimeout(() => {
+            if (!state.dirty) {
+              resultCooldowns.delete(pollId);
+              return;
+            }
+            state.dirty = false;
+            run();
+          }, RESULTS_INTERVAL_MS);
+        });
+    };
+    run();
+  }
 
   io.use(async (socket, next) => {
     try {
@@ -96,11 +142,7 @@ export function setupRealtime(app: FastifyInstance) {
           }
           throw error;
         }
-        const options = await getPollResults(poll.id);
-        io.to(`room:${socket.data.roomId}`).emit("poll:results", {
-          pollId: poll.id,
-          options,
-        });
+        publishResults(socket.data.roomId, poll.id);
         ack({ ok: true });
       } catch (error) {
         app.log.error(error);
@@ -166,6 +208,8 @@ export function setupRealtime(app: FastifyInstance) {
 
   app.addHook("onClose", async () => {
     io.close();
+    pubClient.disconnect();
+    subClient.disconnect();
   });
 
   return io;

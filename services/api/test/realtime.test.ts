@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AddressInfo } from "node:net";
 import type { Socket } from "socket.io-client";
 import { buildApp } from "../src/app.js";
@@ -80,6 +80,43 @@ describe("voting", () => {
     expect(broadcast.options.find((o) => o.id === options[0].id)?.votes).toBe(
       1,
     );
+  });
+});
+
+describe("result broadcasts", () => {
+  it("coalesces a burst of votes into few broadcasts that end on the final totals", async () => {
+    const token = await registerHost(app, "host@example.com");
+    const room = await createRoom(app, token);
+    const { poll, options } = await createPoll(app, token, room.code);
+    await activatePoll(app, token, poll.id);
+
+    const voters = 20;
+    const sessions = await Promise.all(
+      Array.from({ length: voters }, (_, index) =>
+        joinRoom(app, room.code, `Voter ${index}`),
+      ),
+    );
+    const host = await connect({ token, roomCode: room.code });
+    const participants = await Promise.all(
+      sessions.map((session) => connect({ sessionToken: session.sessionToken })),
+    );
+
+    const totals: number[] = [];
+    host.on("poll:results", (data: { options: { votes: number }[] }) => {
+      totals.push(data.options.reduce((sum, option) => sum + option.votes, 0));
+    });
+
+    const acks = await Promise.all(
+      participants.map((socket) =>
+        emitWithAck(socket, "vote:cast", { optionId: options[0].id }),
+      ),
+    );
+
+    expect(acks.every((ack) => ack.ok)).toBe(true);
+    await vi.waitFor(() => expect(totals.at(-1)).toBe(voters), {
+      timeout: 3000,
+    });
+    expect(totals.length).toBeLessThan(voters);
   });
 });
 

@@ -8,4 +8,6 @@ const redis = new Redis(redisUrl, {
   enableOfflineQueue: false,
   maxRetriesPerRequest: 1,
 });
+export const createRedisClient = () => new Redis(redisUrl);
+
 export { redis };
