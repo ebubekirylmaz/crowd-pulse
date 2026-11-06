@@ -26,6 +26,7 @@ import {
   CopyIcon,
   MessageIcon,
   PlusIcon,
+  PresentIcon,
   PulseIcon,
   XIcon,
 } from "../components/icons";
@@ -86,6 +87,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
   if (unauthorized) return null;
 
   const joinUrl = `${location.origin}/join/${code}`;
+  const isLocalHost = ["localhost", "127.0.0.1"].includes(location.hostname);
   const filledOptions = options.map((option) => option.trim()).filter(Boolean);
   const canCreate = question.trim() !== "" && filledOptions.length >= 2;
 
@@ -184,7 +186,18 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
             My rooms
           </Link>
         }
-        right={<LiveIndicator connected={connected} />}
+        right={
+          <div className="flex items-center gap-3">
+            <Link
+              to={`/host/rooms/${code}/present`}
+              className={buttonStyles({ variant: "secondary", size: "sm" })}
+            >
+              <PresentIcon />
+              Present
+            </Link>
+            <LiveIndicator connected={connected} />
+          </div>
+        }
       />
       <main className="mx-auto max-w-5xl px-4 py-8">
         <h1 className="mb-6 text-3xl font-bold tracking-tight">
@@ -213,6 +226,13 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
             <p className="break-all text-xs text-slate-500 dark:text-slate-400">
               {joinUrl}
             </p>
+            {isLocalHost && (
+              <Alert tone="info">
+                This link only works on this computer. Open this page from the
+                live site (or your network address) so the QR code works on
+                phones.
+              </Alert>
+            )}
             <Button variant="secondary" fullWidth onClick={handleCopy}>
               {copied ? <CheckIcon /> : <CopyIcon />}
               {copied ? "Copied" : "Copy link"}

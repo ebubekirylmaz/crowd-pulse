@@ -4,6 +4,7 @@ import Home from "./pages/Home.tsx";
 import HostDashboard from "./pages/HostDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import HostLogin from "./pages/HostLogin.tsx";
+import HostPresent from "./pages/HostPresent.tsx";
 import HostRoomPage from "./pages/HostRoomPage.tsx";
 import Join from "./pages/Join.tsx";
 import RequireHost from "./components/RequireHost.tsx";
@@ -31,6 +32,14 @@ export default function App() {
           element={
             <RequireHost>
               <HostRoomPage />
+            </RequireHost>
+          }
+        />
+        <Route
+          path="/host/rooms/:code/present"
+          element={
+            <RequireHost>
+              <HostPresent />
             </RequireHost>
           }
         />

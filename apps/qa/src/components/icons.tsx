@@ -74,6 +74,19 @@ export const PulseIcon = ({ className }: IconProps) => (
   </Icon>
 );
 
+export const PresentIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <rect x="2" y="3" width="20" height="14" rx="2" />
+    <path d="M8 21h8M12 17v4" />
+  </Icon>
+);
+
+export const ExpandIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+  </Icon>
+);
+
 export const MessageIcon = ({ className }: IconProps) => (
   <Icon className={className}>
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
