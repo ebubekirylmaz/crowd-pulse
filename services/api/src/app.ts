@@ -2,6 +2,7 @@ import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 
 import authRoutes from "./routes/auth.js";
 import cors from "@fastify/cors";
+import demoRoutes from "./routes/demo.js";
 import { corsOrigin } from "./config.js";
 import jwt from "@fastify/jwt";
 import participantRoutes from "./routes/participants.js";
@@ -15,6 +16,7 @@ import { sql } from "./db/index.js";
 export function buildApp() {
   const app = Fastify({
     logger: process.env.NODE_ENV !== "test",
+    trustProxy: true,
   });
 
   app.register(cors, {
@@ -42,6 +44,7 @@ export function buildApp() {
   app.register(participantRoutes);
   app.register(pollRoutes);
   app.register(questionRoutes);
+  app.register(demoRoutes);
 
   setupRealtime(app);
 

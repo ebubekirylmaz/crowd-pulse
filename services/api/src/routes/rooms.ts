@@ -1,17 +1,8 @@
 import type { FastifyInstance } from "fastify";
+import { generateRoomCode } from "../lib/roomCode.js";
 import { getQuestions } from "../db/questions.js";
-import { randomInt } from "node:crypto";
 import { sql } from "../db/index.js";
 import { z } from "zod";
-
-const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-
-function generateCode(length = 6): string {
-  return Array.from(
-    { length },
-    () => CODE_ALPHABET[randomInt(0, CODE_ALPHABET.length)],
-  ).join("");
-}
 
 const createRoomSchema = z.object({
   title: z.string().trim().min(1).max(100),
@@ -30,7 +21,7 @@ export default async function roomRoutes(app: FastifyInstance) {
       }
       const { title } = parsedData;
       for (let i = 0; i < 5; i++) {
-        const code = generateCode();
+        const code = generateRoomCode();
         try {
           const [room] =
             await sql`insert into rooms (host_id, code, title) values (${request.user.sub}, ${code}, ${title}) returning id, code, title, created_at as "createdAt"`;

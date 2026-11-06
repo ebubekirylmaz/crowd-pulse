@@ -7,6 +7,7 @@ const baseUrl = process.env.DATABASE_URL ?? "";
 process.env.ADMIN_DATABASE_URL = baseUrl.replace(/\/[^/]*$/, "/postgres");
 process.env.DATABASE_URL = baseUrl.replace(/\/[^/]*$/, "/crowd_pulse_test");
 process.env.NODE_ENV = "test";
+process.env.DEMO_LIMIT_PER_HOUR = "1000";
 
 export default defineConfig({
   test: {
