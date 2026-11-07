@@ -4,3 +4,5 @@ dist
 .turbo
 .DS_Store
 .mf
+test-results
+playwright-report

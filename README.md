@@ -29,7 +29,7 @@ Work in progress, built in public as a portfolio project.
 | Live Q&A and polling     | Working end to end and deployed (Vercel for the web app, Railway for the API, Postgres and Redis) |
 | Host tools               | Presenter mode, question moderation (answered state), anonymous questions |
 | Demo                     | One-click throwaway demo room, no sign-up                              |
-| Automated tests and CI   | 31 API integration tests and 12 snippet tests, run with typecheck and a web build on every push |
+| Automated tests and CI   | 31 API integration tests, 12 snippet tests and 3 Playwright end-to-end tests, run with typecheck and builds of all three apps on every push |
 | Redis pub/sub fan-out    | Done: Socket.IO Redis adapter, tested with two API instances |
 | Load test                | 5,000 connections in one room, p95 vote-to-screen under 200 ms (see below) |
 | Analytics                | Snippet, ingest, partitioned storage, rollups, query API, dashboard, load tests and ADRs done |
@@ -143,7 +143,7 @@ Socket events: `vote:cast`, `question:ask` and `question:upvote` from participan
 | Frontend         | React, TypeScript, Vite, Tailwind CSS (Module Federation planned)                         |
 | Realtime backend | Node.js, Fastify, Socket.IO, zod, argon2, JWT                                             |
 | Data             | Postgres 16 with plain SQL migrations, Redis 7                                            |
-| Testing          | Vitest integration tests (done); Playwright, k6 and Lighthouse planned                    |
+| Testing          | Vitest integration tests and Playwright end-to-end tests (done); Lighthouse planned                    |
 | Infra            | Docker Compose locally; Vercel or Cloudflare for frontends, Fly.io or Railway for backend |
 
 ## Repository layout
@@ -214,7 +214,17 @@ npm test
 
 The tests use a separate `crowd_pulse_test` database that is created and migrated automatically, and they refuse to run against any database whose name does not end in `_test`.
 
-The same checks run in GitHub Actions on every push (`.github/workflows/ci.yml`) against Postgres and Redis service containers: the API typecheck and tests, and a production build of the web app.
+The same checks run in GitHub Actions on every push (`.github/workflows/ci.yml`) against Postgres and Redis service containers: the API typecheck and tests, production builds of the shell and both modules, and the Playwright end-to-end tests.
+
+End-to-end tests start the API and serve the three built apps on separate ports, which is the same cross-origin setup as in production, then drive a real browser:
+
+```bash
+npx playwright install chromium
+npm run build:apps -w @crowd-pulse/e2e
+npm run e2e -w @crowd-pulse/e2e
+```
+
+They need Postgres and Redis (`docker compose up -d`) and the same `DATABASE_URL`, `REDIS_URL` and `JWT_SECRET` as the API, so point `DATABASE_URL` at a scratch database. Set `E2E_CHANNEL=chrome` to use an installed Chrome instead of downloading Chromium.
 
 ### Running the load test
 
@@ -290,7 +300,7 @@ Numbers come from real test runs, not estimates. The realtime numbers were measu
 | Analytics snippet size (gzipped)               | under 2 KB | 1,086 bytes (the build fails above 2,048) |
 | Ingest throughput (events/sec)                 | n/a        | 31,848 events/s (6,370 requests/s, 5 events per request, 64 workers), p95 17.6 ms, 0 events lost |
 | Dashboard query time (p95) over synthetic data | under 100 ms | 1.7 ms for 7 and 30 days, 33 ms for one room over 24 hours, 111 ms for the 24 hour overview (852,083 events) |
-| Shell + remotes bundle sizes                   | _TBD_      | _TBD_  |
+| Shell + remotes first load (home page)         | n/a        | 185 KB transferred in 38 requests on the live site, shell, Q&A module and shared React included |
 
 The first run, before result broadcasts were throttled, showed a p95 vote-to-screen time of 901 ms with 1,000 voters and 1,980 ms when they all voted within half a second. Every vote was broadcast to the whole room, so the work grew with the square of the audience. Throttling the broadcasts brought those cases down to 158 ms and 151 ms, with all totals still matching exactly. The investigation and the trade-off are written up in [ADR 0004](./docs/adr/0004-throttle-result-broadcasts.md).
 
@@ -339,7 +349,8 @@ Planned, written as the decisions are made:
 - [x] Shell app with Module Federation, shared token, remote failure fallback
 - [ ] Event-based shared state between modules
 - [ ] Independent deploy pipelines per module
-- [ ] Playwright e2e tests, Lighthouse and bundle size checks
+- [x] Playwright e2e tests (live poll through the shell, analytics module, remote failure fallback), run in CI
+- [ ] Lighthouse run
 - [ ] Final README pass, ADRs, demo video
 
 ## Scope
