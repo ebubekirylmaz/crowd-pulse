@@ -16,7 +16,8 @@ beforeAll(() => app.ready());
 afterAll(() => app.close());
 beforeEach(() => resetDb());
 
-const randomIp = () => `203.0.113.${Math.floor(Math.random() * 250) + 1}`;
+const randomIp = () =>
+  `203.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 256)}.${Math.floor(Math.random() * 254) + 1}`;
 
 const pageview = { name: "pageview", path: "/join/ABC123", room: "ABC123" };
 
