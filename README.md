@@ -301,8 +301,11 @@ Numbers come from real test runs, not estimates. The realtime numbers were measu
 | Ingest throughput (events/sec)                 | n/a        | 31,848 events/s (6,370 requests/s, 5 events per request, 64 workers), p95 17.6 ms, 0 events lost |
 | Dashboard query time (p95) over synthetic data | under 100 ms | 1.7 ms for 7 and 30 days, 33 ms for one room over 24 hours, 111 ms for the 24 hour overview (852,083 events) |
 | Shell + remotes first load (home page)         | n/a        | 185 KB transferred in 38 requests on the live site, shell, Q&A module and shared React included |
+| Lighthouse, live home page                     | 90+ each   | Desktop 99 / 100 / 100 / 100, mobile 84-91 / 100 / 100 / 100 over three runs (performance, accessibility, best practices, SEO); mobile LCP 3.0-3.5 s, no blocking time, no layout shift |
 
 The first run, before result broadcasts were throttled, showed a p95 vote-to-screen time of 901 ms with 1,000 voters and 1,980 ms when they all voted within half a second. Every vote was broadcast to the whole room, so the work grew with the square of the audience. Throttling the broadcasts brought those cases down to 158 ms and 151 ms, with all totals still matching exactly. The investigation and the trade-off are written up in [ADR 0004](./docs/adr/0004-throttle-result-broadcasts.md).
+
+The first Lighthouse run found an invalid `robots.txt` (the single page app rewrite answered with HTML) and scored SEO 91, fixed by serving a real file, now 100. It also showed that the mobile page load is a chain: the shell starts, then fetches the Q&A module's entry, then its route code. Preconnecting to the module and API hosts and preloading the module entry did not move the mobile score outside its run-to-run noise (88 before, 84 to 91 after), so the remaining time is the cost of loading two separately deployed modules over a throttled connection. That is the trade-off ADR 0007 accepts for independent deploys.
 
 ## Architecture decision records
 
@@ -350,7 +353,7 @@ Planned, written as the decisions are made:
 - [ ] Event-based shared state between modules
 - [ ] Independent deploy pipelines per module
 - [x] Playwright e2e tests (live poll through the shell, analytics module, remote failure fallback), run in CI
-- [ ] Lighthouse run
+- [x] Lighthouse run on the live site
 - [ ] Final README pass, ADRs, demo video
 
 ## Scope
