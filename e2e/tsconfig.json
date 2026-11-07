@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["*.ts", "tests"]
+  "include": ["*.ts", "tests", "demo"]
 }

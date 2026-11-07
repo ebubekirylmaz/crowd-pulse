@@ -6,3 +6,5 @@ dist
 .mf
 test-results
 playwright-report
+e2e/demo-output
+docs/media

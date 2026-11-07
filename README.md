@@ -6,6 +6,14 @@ A live Q&A and polling platform, a lightweight privacy-friendly analytics tool, 
 
 **Live demo:** [crowd-pulse-shell.vercel.app](https://crowd-pulse-shell.vercel.app) · **Demo video:** _coming soon_ · **Architecture decisions:** [`docs/adr`](./docs/adr)
 
+## Demo
+
+![Crowd Pulse demo: a host starts a live poll, a participant joins from a phone and votes, asks a question, and the host opens the analytics dashboard](./docs/images/demo.gif)
+
+A host opens a demo room and goes to presenter mode. On the right, a participant joins from a phone and votes, and the result moves on the big screen in real time. A question arrives and gets marked as answered, the theme switches to dark, and the host opens the analytics dashboard. The whole thing is generated, not screen-recorded by hand: a Playwright script plays the flow in two browsers and captures sharp 2x frames with the time of each step, and a render script with ffmpeg lays them out with captions and eased zooms on the typing and the results (`npm run demo:record` then `npm run demo:render`, both with `-w @crowd-pulse/e2e`, ffmpeg required). It can be regenerated whenever the UI changes.
+
+![A live poll on the presenter screen next to a participant's phone](./docs/images/live-poll.jpg)
+
 ## Screenshots
 
 The analytics dashboard, filled with about 66,000 synthetic events (see [Generating sample analytics data](#generating-sample-analytics-data)). It follows the system light or dark theme until you pick one with the toggle in the top right corner, and then remembers your choice. It works on a phone too.
