@@ -16,7 +16,13 @@ import {
   TextInput,
   TopBar,
 } from "../components/ui";
-import { CheckIcon, CopyIcon, LogOutIcon, PulseIcon } from "../components/icons";
+import {
+  ChartIcon,
+  CheckIcon,
+  CopyIcon,
+  LogOutIcon,
+  PulseIcon,
+} from "../components/icons";
 
 export default function HostDashboard() {
   const navigate = useNavigate();
@@ -95,10 +101,19 @@ export default function HostDashboard() {
         size="lg"
         left={<Logo to="/host" />}
         right={
-          <Button variant="ghost" size="sm" onClick={expire}>
-            <LogOutIcon />
-            Log out
-          </Button>
+          <div className="flex items-center gap-1">
+            <Link
+              to="/host/analytics"
+              className={buttonStyles({ variant: "ghost", size: "sm" })}
+            >
+              <ChartIcon />
+              Analytics
+            </Link>
+            <Button variant="ghost" size="sm" onClick={expire}>
+              <LogOutIcon />
+              Log out
+            </Button>
+          </div>
         }
       />
       <main className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">

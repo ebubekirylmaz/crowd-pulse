@@ -20,7 +20,7 @@ Work in progress, built in public as a portfolio project.
 | Automated tests and CI   | 31 API integration tests and 12 snippet tests, run with typecheck and a web build on every push |
 | Redis pub/sub fan-out    | Done: Socket.IO Redis adapter, tested with two API instances |
 | Load test                | 5,000 connections in one room, p95 vote-to-screen under 200 ms (see below) |
-| Analytics                | Snippet, ingest, partitioned storage, rollups and query API done; dashboard next |
+| Analytics                | Snippet, ingest, partitioned storage, rollups, query API and dashboard done; ingest load test next |
 | Micro-frontend shell     | Planned                                                                |
 
 ## Why this project
@@ -47,13 +47,13 @@ Most portfolio apps are a single frontend talking to a single API. This project 
 - One-click demo: creates a throwaway host with a ready room, poll and sample questions, rate limited per IP and deleted after 24 hours
 - Landing page with a how-it-works section and link previews (Open Graph) for sharing
 
-### Analytics _(ingest, rollups and query API done, dashboard in progress)_
+### Analytics
 
 - Tiny JS snippet (about 1.1 KB gzipped, a 2 KB budget enforced by the build), cookieless, sends events with `sendBeacon` in batches, follows single page app navigation and skips visitors who send Do Not Track
 - `POST /collect` with strict validation, a per-IP rate limit, and bot and Do Not Track filtering. The IP address is never stored: a unique visitor is a keyed hash of IP and user agent whose key rotates every day, so a person cannot be followed from one day to the next
 - Raw events stored in daily range partitions of a Postgres table (30 days of retention, expired days are dropped as whole partitions), hourly and daily rollup tables for fast reads
 - Query API for a host's rooms: totals, a continuous time series and top events for the last 24 hours, 7 days or 30 days
-- Dashboard with visitors, event counts, time series and per-room breakdown (next)
+- Dashboard at `/host/analytics` with visitors, page views and events, a bar chart drawn as plain SVG (24 hours, 7 days or 30 days, visitors or events), top events, a per-room breakdown with drill-down, loading skeletons, light and dark themes, a phone friendly layout and a quiet refresh every minute. It lives in its own folder (`apps/qa/src/analytics`) as one component that takes a token, so it can later be exposed as a Module Federation remote
 
 ### Micro-frontend shell _(planned)_
 
@@ -212,6 +212,16 @@ npm run loadtest -w services/api -- --url http://localhost:3000 --participants 1
 
 The script creates a throwaway demo room, joins the requested number of participants over REST, connects them over WebSocket, makes each of them vote once at a random moment inside the window (in milliseconds), and reports connection time, vote acknowledgement latency, the time until the host sees each vote, and whether the accepted, broadcast and stored totals match. It needs the demo endpoint, so it is limited by `DEMO_LIMIT_PER_HOUR` per IP.
 
+### Generating sample analytics data
+
+To see the dashboard filled in, or to test queries against a realistic volume, seed synthetic events for existing rooms:
+
+```bash
+npm run seed:analytics -w services/api -- --rooms ABC123,DEF456 --days 30 --events 60000
+```
+
+Each synthetic visitor has a home room and always starts with a page view, events follow a daily curve with quieter weekends, and the hourly and daily rollups are refreshed at the end. It writes to whatever `DATABASE_URL` points at and prints the database name first. Add `--reset` to empty the analytics tables before seeding, and run it against a scratch database when in doubt.
+
 ### Using the analytics snippet
 
 The web app loads the snippet from its own `/cp.js`, and any other site can embed it with one tag:
@@ -291,7 +301,7 @@ Planned, written as the decisions are made:
 - [x] JS snippet and ingest endpoint with rate limiting
 - [x] Time-partitioned raw events and rollup jobs
 - [x] Query API
-- [ ] Dashboard UI
+- [x] Dashboard UI
 - [ ] Load tests and first measurements
 
 **Week 3: Micro-frontend shell and polish**

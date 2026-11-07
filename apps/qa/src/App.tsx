@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import Home from "./pages/Home.tsx";
+import HostAnalytics from "./pages/HostAnalytics.tsx";
 import HostDashboard from "./pages/HostDashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import HostLogin from "./pages/HostLogin.tsx";
@@ -40,6 +41,22 @@ export default function App() {
           element={
             <RequireHost>
               <HostPresent />
+            </RequireHost>
+          }
+        />
+        <Route
+          path="/host/analytics"
+          element={
+            <RequireHost>
+              <HostAnalytics />
+            </RequireHost>
+          }
+        />
+        <Route
+          path="/host/analytics/:code"
+          element={
+            <RequireHost>
+              <HostAnalytics />
             </RequireHost>
           }
         />

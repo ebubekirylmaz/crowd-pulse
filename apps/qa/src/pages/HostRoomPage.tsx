@@ -29,6 +29,7 @@ import {
 } from "../components/ui";
 import {
   ArrowLeftIcon,
+  ChartIcon,
   CheckIcon,
   ChevronUpIcon,
   CopyIcon,
@@ -215,6 +216,13 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
         }
         right={
           <div className="flex items-center gap-3">
+            <Link
+              to={`/host/analytics/${code}`}
+              className={buttonStyles({ variant: "ghost", size: "sm" })}
+            >
+              <ChartIcon />
+              Analytics
+            </Link>
             <Link
               to={`/host/rooms/${code}/present`}
               className={buttonStyles({ variant: "secondary", size: "sm" })}

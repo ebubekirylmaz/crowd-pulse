@@ -97,6 +97,13 @@ export const EyeOffIcon = ({ className }: IconProps) => (
   </Icon>
 );
 
+export const ChartIcon = ({ className }: IconProps) => (
+  <Icon className={className}>
+    <path d="M3 3v18h18" />
+    <path d="M7 15v3M12 9v9M17 5v13" />
+  </Icon>
+);
+
 export const PresentIcon = ({ className }: IconProps) => (
   <Icon className={className}>
     <rect x="2" y="3" width="20" height="14" rx="2" />

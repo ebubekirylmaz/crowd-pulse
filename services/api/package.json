@@ -12,7 +12,8 @@
     "migrate": "tsx --env-file=../../.env src/db/migrate.ts",
     "pretest": "npm run build -w @crowd-pulse/snippet",
     "test": "vitest run",
-    "loadtest": "tsx scripts/loadtest.ts"
+    "loadtest": "tsx scripts/loadtest.ts",
+    "seed:analytics": "tsx --env-file=../../.env scripts/seed-analytics.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.3.1",
