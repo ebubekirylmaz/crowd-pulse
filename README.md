@@ -33,7 +33,7 @@ Work in progress, built in public as a portfolio project.
 | Redis pub/sub fan-out    | Done: Socket.IO Redis adapter, tested with two API instances |
 | Load test                | 5,000 connections in one room, p95 vote-to-screen under 200 ms (see below) |
 | Analytics                | Snippet, ingest, partitioned storage, rollups, query API, dashboard, load tests and ADRs done |
-| Micro-frontend shell     | Planned                                                                |
+| Micro-frontend shell     | Shell, Q&A and Analytics as three Module Federation apps working locally, with a fallback when a remote is down; deploy pipelines and e2e tests next |
 
 ## Why this project
 
@@ -65,14 +65,16 @@ Most portfolio apps are a single frontend talking to a single API. This project 
 - `POST /collect` with strict validation, a per-IP rate limit, and bot and Do Not Track filtering. The IP address is never stored: a unique visitor is a keyed hash of IP and user agent whose key rotates every day, so a person cannot be followed from one day to the next
 - Raw events stored in daily range partitions of a Postgres table (30 days of retention, expired days are dropped as whole partitions), hourly and daily rollup tables for fast reads
 - Query API for a host's rooms: totals, a continuous time series and top events for the last 24 hours, 7 days or 30 days
-- Dashboard at `/host/analytics` with visitors, page views and events, a bar chart drawn as plain SVG (24 hours, 7 days or 30 days, visitors or events), top events, a per-room breakdown with drill-down, loading skeletons, light and dark themes, a phone friendly layout and a quiet refresh every minute. It lives in its own folder (`apps/qa/src/analytics`) as one component that takes a token, so it can later be exposed as a Module Federation remote
+- Dashboard at `/host/analytics` with visitors, page views and events, a bar chart drawn as plain SVG (24 hours, 7 days or 30 days, visitors or events), top events, a per-room breakdown with drill-down, loading skeletons, light and dark themes, a phone friendly layout and a quiet refresh every minute. It is its own app (`apps/analytics`) that exposes one component taking a token, and the shell loads it at runtime
 
-### Micro-frontend shell _(planned)_
+### Micro-frontend shell
 
-- Host app composes the Q&A and Analytics modules at runtime (Module Federation)
-- Shared auth token and an event-based shared state between modules
-- Each module has its own build and deploy pipeline
-- Fallback UI when a remote fails to load
+- `apps/shell` is the host. It owns the router and the host token check, and loads the other two apps at runtime with Module Federation: `apps/qa` exposes its routes (`qa/Routes`) and `apps/analytics` exposes the dashboard (`analytics/Dashboard`)
+- React, React DOM and React Router are shared singletons, so a link inside one module navigates inside the shell without a page load
+- The host token is read from one storage key and handed to the analytics module as a prop, so modules do not import each other's code
+- If a remote cannot be loaded, the shell keeps its header and shows an "unavailable" card with a retry (a reload), and the other module keeps working
+- Each app has its own build, and the shell finds the remotes through `REMOTE_QA_URL` and `REMOTE_ANALYTICS_URL`, so they can be deployed independently
+- Design reasons and trade-offs are in [ADR 0007](./docs/adr/0007-module-federation-shell.md)
 
 ## Architecture
 
@@ -149,12 +151,12 @@ Socket events: `vote:cast`, `question:ask` and `question:upvote` from participan
 ```text
 .
 ├── apps/
-│   ├── qa/             # Live Q&A and polling UI (participant and host screens)
-│   ├── shell/          # Planned: Module Federation host
-│   └── analytics/      # Planned: analytics dashboard UI
+│   ├── shell/          # Module Federation host: router, auth check, loads the two remotes
+│   ├── qa/             # Remote: live Q&A and polling UI (also runs standalone)
+│   └── analytics/      # Remote: analytics dashboard
 ├── packages/
-│   ├── snippet/        # Cookieless analytics JS snippet, built with esbuild, size budget enforced
-│   └── shared/         # Planned: shared types and event contracts
+│   ├── ui/             # Shared components, icons and the Tailwind theme
+│   └── snippet/        # Cookieless analytics JS snippet, built with esbuild, size budget enforced
 ├── services/
 │   └── api/
 │       ├── src/        # Fastify app: routes, realtime, db access
@@ -198,7 +200,7 @@ npm run migrate -w services/api
 npm run dev
 ```
 
-The API runs on `http://localhost:3000` and the web app on `http://localhost:5173`.
+The API runs on `http://localhost:3000`. Open the shell on `http://localhost:5175`, which loads the Q&A app (served on 5173) and the analytics dashboard (served on 5174) at runtime. The Q&A app also works on its own at `http://localhost:5173`, without the analytics page.
 
 **Try it:** open `/host/login`, sign up, create a room and open it. Scan the QR code (or open the join link) on another device or in a private window, join with a name, and vote on a poll the host activates.
 
@@ -302,10 +304,10 @@ Written so far, in [`docs/adr`](./docs/adr):
 4. [Throttle poll result broadcasts to one per 150 ms per poll](./docs/adr/0004-throttle-result-broadcasts.md)
 5. [Keep raw events for 30 days and serve the dashboard from rollups](./docs/adr/0005-raw-events-plus-rollups.md)
 6. [Count visitors without cookies, with a hash that rotates every day](./docs/adr/0006-cookieless-visitor-counting.md)
+7. [Compose the app with Module Federation, three apps and a shared UI package](./docs/adr/0007-module-federation-shell.md)
 
 Planned, written as the decisions are made:
 
-- Why Module Federation (and why not iframes or a single app)
 - Shared state between remotes: event-based instead of a global store
 - Host token storage: `localStorage` for v1 versus an `httpOnly` cookie
 
@@ -334,8 +336,9 @@ Planned, written as the decisions are made:
 
 **Week 3: Micro-frontend shell and polish**
 
-- [ ] Shell app with Module Federation, shared auth and state
-- [ ] Independent CI/CD per module, remote failure fallback
+- [x] Shell app with Module Federation, shared token, remote failure fallback
+- [ ] Event-based shared state between modules
+- [ ] Independent deploy pipelines per module
 - [ ] Playwright e2e tests, Lighthouse and bundle size checks
 - [ ] Final README pass, ADRs, demo video
 

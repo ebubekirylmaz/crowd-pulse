@@ -7,8 +7,8 @@ import {
   cx,
   EmptyState,
   Skeleton,
-} from "../components/ui";
-import { ChartIcon } from "../components/icons";
+} from "@crowd-pulse/ui";
+import { ChartIcon } from "@crowd-pulse/ui";
 import TimeSeriesChart from "./TimeSeriesChart";
 import type { Metric, Overview, Range, RoomReport } from "./types";
 

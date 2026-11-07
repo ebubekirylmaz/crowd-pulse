@@ -1,12 +1,16 @@
 import { useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import AnalyticsDashboard from "../analytics/AnalyticsDashboard";
-import { buttonStyles, Logo, TopBar } from "../components/ui";
-import { ArrowLeftIcon } from "../components/icons";
-import { clearToken, loadToken } from "../hostAuth";
-import { usePageTitle } from "../hooks/usePageTitle";
+import {
+  ArrowLeftIcon,
+  buttonStyles,
+  Logo,
+  TopBar,
+} from "@crowd-pulse/ui";
+import RemoteBoundary from "./RemoteBoundary.tsx";
+import { clearToken, loadToken } from "./hostAuth.ts";
+import { usePageTitle } from "./usePageTitle.ts";
 
-export default function HostAnalytics() {
+export default function AnalyticsPage() {
   const { code } = useParams();
   const navigate = useNavigate();
   const token = loadToken() ?? "";
@@ -47,11 +51,15 @@ export default function HostAnalytics() {
             All rooms
           </Link>
         )}
-        <AnalyticsDashboard
-          token={token}
-          roomCode={roomCode}
-          onUnauthorized={expire}
-          onSelectRoom={selectRoom}
+        <RemoteBoundary
+          name="Analytics"
+          load={() => import("analytics/Dashboard")}
+          props={{
+            token,
+            roomCode,
+            onUnauthorized: expire,
+            onSelectRoom: selectRoom,
+          }}
         />
       </main>
     </div>

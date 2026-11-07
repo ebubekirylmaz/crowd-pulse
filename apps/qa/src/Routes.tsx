@@ -1,0 +1,50 @@
+import "./index.css";
+
+import { Route, Routes } from "react-router-dom";
+
+import Home from "./pages/Home.tsx";
+import HostDashboard from "./pages/HostDashboard.tsx";
+import NotFound from "./pages/NotFound.tsx";
+import HostLogin from "./pages/HostLogin.tsx";
+import HostPresent from "./pages/HostPresent.tsx";
+import HostRoomPage from "./pages/HostRoomPage.tsx";
+import Join from "./pages/Join.tsx";
+import RequireHost from "./components/RequireHost.tsx";
+import Room from "./pages/Room.tsx";
+
+export default function QaRoutes() {
+  return (
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/join" element={<Home />} />
+        <Route path="/join/:code" element={<Join />} />
+        <Route path="/r/:code" element={<Room />} />
+        <Route path="/host/login" element={<HostLogin />} />
+        <Route
+          path="/host"
+          element={
+            <RequireHost>
+              <HostDashboard />
+            </RequireHost>
+          }
+        />
+        <Route
+          path="/host/rooms/:code"
+          element={
+            <RequireHost>
+              <HostRoomPage />
+            </RequireHost>
+          }
+        />
+        <Route
+          path="/host/rooms/:code/present"
+          element={
+            <RequireHost>
+              <HostPresent />
+            </RequireHost>
+          }
+        />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+  );
+}

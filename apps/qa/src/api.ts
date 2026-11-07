@@ -8,8 +8,6 @@ function resolveApiUrl() {
   return /^https?:\/\//.test(configured) ? configured : `https://${configured}`;
 }
 
-import type { Overview, Range, RoomReport } from "./analytics/types";
-
 export const API_URL = resolveApiUrl();
 
 export class ApiError extends Error {
@@ -135,13 +133,5 @@ export const api = {
     request<unknown>(`/polls/${pollId}/close`, {
       method: "POST",
       headers: bearer(token),
-    }),
-  getAnalyticsOverview: (token: string, range: Range) =>
-    request<Overview>(`/analytics/overview?range=${range}`, {
-      headers: bearer(token),
-    }),
-  getRoomAnalytics: (token: string, code: string, range: Range) =>
-    request<RoomReport>(`/analytics/rooms/${code}?range=${range}`, {
-      headers: bearer(token),
-    }),
+    })
 };
