@@ -64,7 +64,8 @@ export default function TimeSeriesChart({
   const peak = Math.max(0, ...values);
   const total = values.reduce((sum, value) => sum + value, 0);
   const max = niceMax(Math.max(1, peak));
-  const plotWidth = width - PAD.left - PAD.right;
+  const padLeft = Math.max(PAD.left, max.toLocaleString("en-US").length * 7 + 16);
+  const plotWidth = width - padLeft - PAD.right;
   const plotHeight = HEIGHT - PAD.top - PAD.bottom;
   const slot = plotWidth / Math.max(points.length, 1);
   const barWidth = Math.max(2, slot * 0.68);
@@ -88,7 +89,7 @@ export default function TimeSeriesChart({
           return (
             <g key={tick}>
               <line
-                x1={PAD.left}
+                x1={padLeft}
                 x2={width - PAD.right}
                 y1={y}
                 y2={y}
@@ -96,7 +97,7 @@ export default function TimeSeriesChart({
                 strokeWidth="1"
               />
               <text
-                x={PAD.left - 8}
+                x={padLeft - 8}
                 y={y + 4}
                 textAnchor="end"
                 className="fill-slate-500 text-[11px] dark:fill-slate-400"
@@ -110,7 +111,7 @@ export default function TimeSeriesChart({
         {points.map((point, index) => {
           const value = point[metric];
           const height = value > 0 ? Math.max(2, (value / max) * plotHeight) : 0;
-          const x = PAD.left + index * slot + (slot - barWidth) / 2;
+          const x = padLeft + index * slot + (slot - barWidth) / 2;
           return (
             <rect
               key={point.at}
@@ -127,7 +128,7 @@ export default function TimeSeriesChart({
         })}
 
         {labelIndexes.map((index, position) => {
-          const x = PAD.left + index * slot + slot / 2;
+          const x = padLeft + index * slot + slot / 2;
           const anchor =
             position === 0 && labelIndexes.length > 1
               ? "start"
@@ -137,7 +138,7 @@ export default function TimeSeriesChart({
           return (
             <text
               key={index}
-              x={anchor === "start" ? PAD.left : anchor === "end" ? width - PAD.right : x}
+              x={anchor === "start" ? padLeft : anchor === "end" ? width - PAD.right : x}
               y={HEIGHT - 8}
               textAnchor={anchor}
               className="fill-slate-500 text-[11px] dark:fill-slate-400"
