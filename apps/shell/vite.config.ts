@@ -27,6 +27,35 @@ function snippetPlugin(): Plugin {
   };
 }
 
+function originOf(url: string) {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
+}
+
+function resourceHintsPlugin(origins: string[], preload: string): Plugin {
+  return {
+    name: "crowd-pulse-resource-hints",
+    transformIndexHtml() {
+      const unique = [...new Set(origins.filter(Boolean))];
+      return [
+        ...unique.map((origin) => ({
+          tag: "link",
+          attrs: { rel: "preconnect", href: origin, crossorigin: "" },
+          injectTo: "head-prepend" as const,
+        })),
+        {
+          tag: "link",
+          attrs: { rel: "modulepreload", href: preload, crossorigin: "" },
+          injectTo: "head-prepend" as const,
+        },
+      ];
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const qaEntry = env.REMOTE_QA_URL || "http://localhost:5173/remoteEntry.js";
@@ -38,6 +67,12 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       snippetPlugin(),
+      resourceHintsPlugin(
+        [originOf(qaEntry), originOf(env.VITE_API_URL ?? "")].filter(
+          (origin): origin is string => Boolean(origin),
+        ),
+        qaEntry,
+      ),
       federation({
         name: "shell",
         dts: false,
