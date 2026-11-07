@@ -1,0 +1,13 @@
+{
+  "name": "@crowd-pulse/snippet",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "npm run build && node --test test/snippet.test.mjs"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

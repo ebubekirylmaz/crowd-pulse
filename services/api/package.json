@@ -10,6 +10,7 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "migrate": "tsx --env-file=../../.env src/db/migrate.ts",
+    "pretest": "npm run build -w @crowd-pulse/snippet",
     "test": "vitest run",
     "loadtest": "tsx scripts/loadtest.ts"
   },
