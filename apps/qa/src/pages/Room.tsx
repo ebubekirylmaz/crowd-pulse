@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { api, type Room as RoomInfo } from "../api";
 import { clearSession, loadSession } from "../session";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { track } from "../lib/analytics";
+import { emit } from "@crowd-pulse/events";
 import { useRoomSocket } from "../hooks/useRoomSocket";
 import {
   loadUpvotes,
@@ -112,7 +112,7 @@ function RoomView({
     if (!pollId) return;
     const result = await vote(optionId);
     if (result.ok) {
-      track("vote");
+      emit("poll:voted", {});
       setVotes((prev) => ({ ...prev, [pollId]: optionId }));
       saveVote(pollId, optionId);
       setMessage(null);
@@ -133,7 +133,7 @@ function RoomView({
     const result = await ask(body, anonymous);
     setAsking(false);
     if (result.ok) {
-      track("question_ask", { anonymous });
+      emit("question:asked", { anonymous });
       setDraft("");
       setMessage(null);
     } else {
@@ -143,7 +143,7 @@ function RoomView({
 
   async function handleUpvote(questionId: string) {
     const result = await upvote(questionId);
-    if (result.ok) track("question_upvote");
+    if (result.ok) emit("question:upvoted", {});
     if (result.ok || result.error === "already_upvoted") {
       setUpvoted((prev) => {
         const next = new Set(prev).add(questionId);

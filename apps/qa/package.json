@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@crowd-pulse/events": "*",
     "@crowd-pulse/snippet": "*",
     "@crowd-pulse/ui": "*",
     "@tailwindcss/vite": "^4.3.3",

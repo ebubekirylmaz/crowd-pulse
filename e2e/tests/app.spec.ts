@@ -14,9 +14,10 @@ async function registerHost(request: APIRequestContext) {
   return token as string;
 }
 
-test("a demo host and a participant run a live poll through the shell", async ({
+test("a vote in the Q&A module reaches the analytics collector through the event bridge", async ({
   page,
   browser,
+  request,
 }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Try the live demo" }).click();
@@ -37,6 +38,26 @@ test("a demo host and a participant run a live poll through the shell", async ({
   await expect(phone.getByText("Your vote is saved")).toBeVisible();
 
   await expect(page.getByText("1 vote total")).toBeVisible();
+
+  const hostToken = await page.evaluate(
+    (key) => localStorage.getItem(key),
+    TOKEN_KEY,
+  );
+  await expect
+    .poll(
+      async () => {
+        const res = await request.get(
+          `${API}/analytics/rooms/${code}?range=24h`,
+          { headers: { authorization: `Bearer ${hostToken}` } },
+        );
+        const report = await res.json();
+        return (report.topEvents as { event: string; events: number }[]).find(
+          (entry) => entry.event === "vote",
+        )?.events;
+      },
+      { timeout: 15_000 },
+    )
+    .toBe(1);
   await participant.close();
 });
 

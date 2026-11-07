@@ -29,7 +29,7 @@ Work in progress, built in public as a portfolio project.
 | Live Q&A and polling     | Working end to end and deployed (Vercel for the web app, Railway for the API, Postgres and Redis) |
 | Host tools               | Presenter mode, question moderation (answered state), anonymous questions |
 | Demo                     | One-click throwaway demo room, no sign-up                              |
-| Automated tests and CI   | 31 API integration tests, 12 snippet tests and 3 Playwright end-to-end tests, run with typecheck and builds of all three apps on every push |
+| Automated tests and CI   | 31 API integration tests, 12 snippet tests, 6 event bus tests and 4 Playwright end-to-end tests, run with typecheck and builds of all three apps on every push |
 | Redis pub/sub fan-out    | Done: Socket.IO Redis adapter, tested with two API instances |
 | Load test                | 5,000 connections in one room, p95 vote-to-screen under 200 ms (see below) |
 | Analytics                | Snippet, ingest, partitioned storage, rollups, query API, dashboard, load tests and ADRs done |
@@ -73,6 +73,7 @@ Most portfolio apps are a single frontend talking to a single API. This project 
 - React, React DOM and React Router are shared singletons, so a link inside one module navigates inside the shell without a page load
 - The host token is read from one storage key and handed to the analytics module as a prop, so modules do not import each other's code
 - If a remote cannot be loaded, the shell keeps its header and shows an "unavailable" card with a retry (a reload), and the other module keeps working
+- Modules never call each other's code. The Q&A module emits typed domain events (`poll:voted`, `question:asked` and so on) through a tiny shared bus, and a bridge in the shell forwards them to analytics ([ADR 0008](./docs/adr/0008-event-based-module-communication.md))
 - Each app has its own build, and the shell finds the remotes through `REMOTE_QA_URL` and `REMOTE_ANALYTICS_URL`, so they can be deployed independently
 - Design reasons and trade-offs are in [ADR 0007](./docs/adr/0007-module-federation-shell.md)
 
@@ -156,6 +157,7 @@ Socket events: `vote:cast`, `question:ask` and `question:upvote` from participan
 │   └── analytics/      # Remote: analytics dashboard
 ├── packages/
 │   ├── ui/             # Shared components, icons and the Tailwind theme
+│   ├── events/         # Typed event bus the modules use to talk, plus the analytics bridge
 │   └── snippet/        # Cookieless analytics JS snippet, built with esbuild, size budget enforced
 ├── services/
 │   └── api/
@@ -318,6 +320,7 @@ Written so far, in [`docs/adr`](./docs/adr):
 5. [Keep raw events for 30 days and serve the dashboard from rollups](./docs/adr/0005-raw-events-plus-rollups.md)
 6. [Count visitors without cookies, with a hash that rotates every day](./docs/adr/0006-cookieless-visitor-counting.md)
 7. [Compose the app with Module Federation, three apps and a shared UI package](./docs/adr/0007-module-federation-shell.md)
+8. [Modules talk through typed events, not through each other's code or a global store](./docs/adr/0008-event-based-module-communication.md)
 
 Planned, written as the decisions are made:
 
@@ -350,7 +353,7 @@ Planned, written as the decisions are made:
 **Week 3: Micro-frontend shell and polish**
 
 - [x] Shell app with Module Federation, shared token, remote failure fallback
-- [ ] Event-based shared state between modules
+- [x] Event-based communication between modules, with a typed bus and an ADR
 - [ ] Independent deploy pipelines per module
 - [x] Playwright e2e tests (live poll through the shell, analytics module, remote failure fallback), run in CI
 - [x] Lighthouse run on the live site

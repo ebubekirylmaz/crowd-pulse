@@ -11,7 +11,7 @@ import {
 import { clearToken, loadToken } from "../hostAuth";
 import { useHostRoom } from "../hooks/useHostRoom";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { track } from "../lib/analytics";
+import { emit } from "@crowd-pulse/events";
 import { percentOf, pluralize, timeAgo } from "../lib/format";
 import {
   Alert,
@@ -117,7 +117,7 @@ function HostRoomView({ code, token }: { code: string; token: string }) {
     setMessage(null);
     try {
       await api.createPoll(token, code, question.trim(), filledOptions);
-      track("poll_create", { options: filledOptions.length });
+      emit("poll:created", { options: filledOptions.length });
       setQuestion("");
       setOptions(["", ""]);
       await reloadPolls();

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api, ApiError, type Room } from "../api";
 import { loadSession, saveSession } from "../session";
 import { usePageTitle } from "../hooks/usePageTitle";
-import { track } from "../lib/analytics";
+import { emit } from "@crowd-pulse/events";
 import {
   Alert,
   Button,
@@ -66,7 +66,7 @@ export default function Join() {
           sessionToken: response.sessionToken,
           displayName: response.participant.displayName,
         });
-        track("join");
+        emit("room:joined", {});
         navigate(`/r/${code}`);
       })
       .catch((error) => {

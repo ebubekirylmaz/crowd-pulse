@@ -60,6 +60,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test -w @crowd-pulse/snippet
+      - run: npm test -w @crowd-pulse/events
       - run: npm run build -w apps/qa
       - run: npm run build -w apps/analytics
       - run: npm run build -w apps/shell
