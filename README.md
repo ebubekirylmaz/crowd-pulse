@@ -6,6 +6,18 @@ A live Q&A and polling platform, a lightweight privacy-friendly analytics tool, 
 
 **Live demo:** [crowpulseqa.vercel.app](https://crowpulseqa.vercel.app) · **Demo video:** _coming soon_ · **Architecture decisions:** [`docs/adr`](./docs/adr)
 
+## Screenshots
+
+The analytics dashboard, filled with about 78,000 synthetic events (see [Generating sample analytics data](#generating-sample-analytics-data)). It follows the system light or dark theme and works on a phone.
+
+| Dark, last 7 days | Light, last 30 days |
+| --- | --- |
+| ![Analytics dashboard in dark mode](./docs/images/analytics-dashboard-dark.jpg) | ![Analytics dashboard in light mode](./docs/images/analytics-dashboard-light.jpg) |
+
+<p align="center">
+  <img src="./docs/images/analytics-dashboard-mobile.jpg" alt="Analytics dashboard on a phone" width="260">
+</p>
+
 ---
 
 ## Status
@@ -20,7 +32,7 @@ Work in progress, built in public as a portfolio project.
 | Automated tests and CI   | 31 API integration tests and 12 snippet tests, run with typecheck and a web build on every push |
 | Redis pub/sub fan-out    | Done: Socket.IO Redis adapter, tested with two API instances |
 | Load test                | 5,000 connections in one room, p95 vote-to-screen under 200 ms (see below) |
-| Analytics                | Snippet, ingest, partitioned storage, rollups, query API and dashboard done; ingest load test next |
+| Analytics                | Snippet, ingest, partitioned storage, rollups, query API, dashboard, load tests and ADRs done |
 | Micro-frontend shell     | Planned                                                                |
 
 ## Why this project
@@ -222,6 +234,22 @@ npm run seed:analytics -w services/api -- --rooms ABC123,DEF456 --days 30 --even
 
 Each synthetic visitor has a home room and always starts with a page view, events follow a daily curve with quieter weekends, and the hourly and daily rollups are refreshed at the end. It writes to whatever `DATABASE_URL` points at and prints the database name first. Add `--reset` to empty the analytics tables before seeding, and run it against a scratch database when in doubt.
 
+### Measuring ingest and dashboard queries
+
+With the API running against a scratch database, the ingest test sends batches to `/collect` from many different client addresses for a fixed time, then checks how one address behaves against the rate limit:
+
+```bash
+npm run loadtest:ingest -w services/api -- --url http://localhost:3000 --duration 10 --concurrency 64 --batch 5
+```
+
+After seeding data, the dashboard benchmark calls the analytics endpoints in process as the host that owns the seeded rooms and prints p50, p95 and max per endpoint, next to the same questions asked of the raw events table:
+
+```bash
+npm run bench:dashboard -w services/api
+```
+
+Both ran on one laptop with the load generator, the API and the databases sharing the CPU, and the benchmark skips network time, so read the results as a floor. The reasoning is in [ADR 0005](./docs/adr/0005-raw-events-plus-rollups.md).
+
 ### Using the analytics snippet
 
 The web app loads the snippet from its own `/cp.js`, and any other site can embed it with one tag:
@@ -258,8 +286,8 @@ Numbers come from real test runs, not estimates. The realtime numbers were measu
 | Vote to host-screen latency (p95)              | under 1 s  | 158 ms (1,000 voters in 3 s), 182 ms (5,000 voters in 5 s) |
 | Vote acknowledgement latency (p95)             | n/a        | 17 ms (1,000 voters in 3 s), 59 ms (5,000 voters in 5 s) |
 | Analytics snippet size (gzipped)               | under 2 KB | 1,086 bytes (the build fails above 2,048) |
-| Ingest throughput (events/sec)                 | _TBD_      | _TBD_  |
-| Dashboard query time (p95) over synthetic data | _TBD_      | _TBD_  |
+| Ingest throughput (events/sec)                 | n/a        | 31,848 events/s (6,370 requests/s, 5 events per request, 64 workers), p95 17.6 ms, 0 events lost |
+| Dashboard query time (p95) over synthetic data | under 100 ms | 1.7 ms for 7 and 30 days, 33 ms for one room over 24 hours, 111 ms for the 24 hour overview (852,083 events) |
 | Shell + remotes bundle sizes                   | _TBD_      | _TBD_  |
 
 The first run, before result broadcasts were throttled, showed a p95 vote-to-screen time of 901 ms with 1,000 voters and 1,980 ms when they all voted within half a second. Every vote was broadcast to the whole room, so the work grew with the square of the audience. Throttling the broadcasts brought those cases down to 158 ms and 151 ms, with all totals still matching exactly. The investigation and the trade-off are written up in [ADR 0004](./docs/adr/0004-throttle-result-broadcasts.md).
@@ -272,11 +300,11 @@ Written so far, in [`docs/adr`](./docs/adr):
 2. [One vote per participant, enforced by the database](./docs/adr/0002-one-vote-enforced-by-the-database.md)
 3. [Plain SQL migrations applied at startup under an advisory lock](./docs/adr/0003-sql-migrations-at-startup.md)
 4. [Throttle poll result broadcasts to one per 150 ms per poll](./docs/adr/0004-throttle-result-broadcasts.md)
+5. [Keep raw events for 30 days and serve the dashboard from rollups](./docs/adr/0005-raw-events-plus-rollups.md)
+6. [Count visitors without cookies, with a hash that rotates every day](./docs/adr/0006-cookieless-visitor-counting.md)
 
 Planned, written as the decisions are made:
 
-- Raw events plus rollup tables vs. live aggregation, and when ClickHouse would make sense
-- Cookieless unique visitor counting with a rotating salt
 - Why Module Federation (and why not iframes or a single app)
 - Shared state between remotes: event-based instead of a global store
 - Host token storage: `localStorage` for v1 versus an `httpOnly` cookie
@@ -302,7 +330,7 @@ Planned, written as the decisions are made:
 - [x] Time-partitioned raw events and rollup jobs
 - [x] Query API
 - [x] Dashboard UI
-- [ ] Load tests and first measurements
+- [x] Load tests and first measurements
 
 **Week 3: Micro-frontend shell and polish**
 

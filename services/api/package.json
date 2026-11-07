@@ -13,7 +13,9 @@
     "pretest": "npm run build -w @crowd-pulse/snippet",
     "test": "vitest run",
     "loadtest": "tsx scripts/loadtest.ts",
-    "seed:analytics": "tsx --env-file=../../.env scripts/seed-analytics.ts"
+    "loadtest:ingest": "tsx scripts/loadtest-ingest.ts",
+    "bench:dashboard": "tsx --env-file=../../.env scripts/bench-dashboard.ts",
+    "seed:analytics":"tsx --env-file=../../.env scripts/seed-analytics.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.3.1",
