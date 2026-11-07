@@ -2,6 +2,7 @@ import { type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, ApiError } from "../api";
 import { loadToken, saveToken } from "../hostAuth";
+import { track } from "../lib/analytics";
 import {
   Alert,
   Badge,
@@ -88,6 +89,7 @@ export default function Home() {
     try {
       const { token, code: demoCode } = await api.startDemo();
       saveToken(token);
+      track("demo_start");
       navigate(`/host/rooms/${demoCode}`);
     } catch (error) {
       setDemoError(

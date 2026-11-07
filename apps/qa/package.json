@@ -4,12 +4,15 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "predev": "npm run build -w @crowd-pulse/snippet",
     "dev": "vite",
+    "prebuild": "npm run build -w @crowd-pulse/snippet",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@crowd-pulse/snippet": "*",
     "@tailwindcss/vite": "^4.3.3",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.8",

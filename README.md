@@ -17,10 +17,10 @@ Work in progress, built in public as a portfolio project.
 | Live Q&A and polling     | Working end to end and deployed (Vercel for the web app, Railway for the API, Postgres and Redis) |
 | Host tools               | Presenter mode, question moderation (answered state), anonymous questions |
 | Demo                     | One-click throwaway demo room, no sign-up                              |
-| Automated tests and CI   | 15 API integration tests, run with typecheck and a web build on every push |
+| Automated tests and CI   | 31 API integration tests and 12 snippet tests, run with typecheck and a web build on every push |
 | Redis pub/sub fan-out    | Done: Socket.IO Redis adapter, tested with two API instances |
 | Load test                | 5,000 connections in one room, p95 vote-to-screen under 200 ms (see below) |
-| Analytics                | Planned                                                                |
+| Analytics                | Snippet, ingest, partitioned storage, rollups and query API done; dashboard next |
 | Micro-frontend shell     | Planned                                                                |
 
 ## Why this project
@@ -47,12 +47,13 @@ Most portfolio apps are a single frontend talking to a single API. This project 
 - One-click demo: creates a throwaway host with a ready room, poll and sample questions, rate limited per IP and deleted after 24 hours
 - Landing page with a how-it-works section and link previews (Open Graph) for sharing
 
-### Analytics _(planned)_
+### Analytics _(ingest, rollups and query API done, dashboard in progress)_
 
-- Tiny JS snippet (target: under 2 KB), cookieless, sends events with `sendBeacon` in batches
-- Ingest endpoint with validation and rate limiting
-- Raw events stored in a time-partitioned table, hourly and daily rollup tables for fast reads
-- Dashboard with visitors, event counts, time series and per-room breakdown
+- Tiny JS snippet (about 1.1 KB gzipped, a 2 KB budget enforced by the build), cookieless, sends events with `sendBeacon` in batches, follows single page app navigation and skips visitors who send Do Not Track
+- `POST /collect` with strict validation, a per-IP rate limit, and bot and Do Not Track filtering. The IP address is never stored: a unique visitor is a keyed hash of IP and user agent whose key rotates every day, so a person cannot be followed from one day to the next
+- Raw events stored in daily range partitions of a Postgres table (30 days of retention, expired days are dropped as whole partitions), hourly and daily rollup tables for fast reads
+- Query API for a host's rooms: totals, a continuous time series and top events for the last 24 hours, 7 days or 30 days
+- Dashboard with visitors, event counts, time series and per-room breakdown (next)
 
 ### Micro-frontend shell _(planned)_
 
@@ -113,6 +114,9 @@ The Q&A module talks to the realtime API. The analytics snippet embedded in Q&A 
 | `GET /rooms/:code/questions`     | public      | Questions sorted by upvotes                          |
 | `POST /questions/:id/answered`   | host        | Mark a question answered or reopen it                |
 | `POST /demo`                     | public      | Create a temporary demo host, room and poll (rate limited) |
+| `POST /collect`                  | public      | Analytics ingest: batch of up to 20 events, rate limited per IP, answers `204` |
+| `GET /analytics/overview`        | host        | Totals, series and per-room breakdown for the host's rooms (`range=24h`, `7d` or `30d`) |
+| `GET /analytics/rooms/:code`     | host        | Totals, series and top events for one room           |
 | `GET /health`                    | public      | Postgres and Redis status                            |
 
 Socket events: `vote:cast`, `question:ask` and `question:upvote` from participants; `poll:activated`, `poll:closed`, `poll:results`, `question:new` and `question:updated` from the server.
@@ -137,7 +141,7 @@ Socket events: `vote:cast`, `question:ask` and `question:upvote` from participan
 │   ├── shell/          # Planned: Module Federation host
 │   └── analytics/      # Planned: analytics dashboard UI
 ├── packages/
-│   ├── snippet/        # Planned: cookieless analytics JS snippet
+│   ├── snippet/        # Cookieless analytics JS snippet, built with esbuild, size budget enforced
 │   └── shared/         # Planned: shared types and event contracts
 ├── services/
 │   └── api/
@@ -208,6 +212,16 @@ npm run loadtest -w services/api -- --url http://localhost:3000 --participants 1
 
 The script creates a throwaway demo room, joins the requested number of participants over REST, connects them over WebSocket, makes each of them vote once at a random moment inside the window (in milliseconds), and reports connection time, vote acknowledgement latency, the time until the host sees each vote, and whether the accepted, broadcast and stored totals match. It needs the demo endpoint, so it is limited by `DEMO_LIMIT_PER_HOUR` per IP.
 
+### Using the analytics snippet
+
+The web app loads the snippet from its own `/cp.js`, and any other site can embed it with one tag:
+
+```html
+<script async src="https://your-site.example/cp.js" data-endpoint="https://your-api.example/collect" data-room-regex="^/room/([A-Za-z0-9]{4,12})"></script>
+```
+
+It records a page view on load and on every client-side navigation, and exposes `window.cp.track(name, props)` for custom events such as `vote`. `data-room-regex` is optional: its first capture group becomes the room code the event is attributed to. The snippet does nothing when the browser sends Do Not Track or Global Privacy Control, it never reads or writes cookies or storage, and the build prints its size and fails above 2 KB gzipped.
+
 ### Environment variables
 
 | Variable                                      | Description                                                              |
@@ -221,7 +235,8 @@ The script creates a throwaway demo room, joins the requested number of particip
 | `VITE_API_URL`                                | Optional, web app. API base URL, defaults to `http://localhost:3000`     |
 | `VITE_SITE_URL`                               | Web app. Public site address used in link previews, set in `apps/qa/.env.production` |
 | `DEMO_LIMIT_PER_HOUR`                         | Optional. Demo rooms allowed per IP per hour, defaults to `5`            |
-| `ANALYTICS_SALT_ROTATION`                     | Planned: rotation period for the salt used in cookieless visitor hashing |
+| `ANALYTICS_SECRET`                            | Optional. Key behind the daily visitor hash, defaults to a value derived from `JWT_SECRET` |
+| `COLLECT_LIMIT_PER_MINUTE`                    | Optional. Analytics requests allowed per IP per minute, defaults to `120` |
 
 ## Performance and measurements
 
@@ -232,7 +247,7 @@ Numbers come from real test runs, not estimates. The realtime numbers were measu
 | Concurrent WebSocket connections in one room   | n/a        | 5,000 connected, 0 failures |
 | Vote to host-screen latency (p95)              | under 1 s  | 158 ms (1,000 voters in 3 s), 182 ms (5,000 voters in 5 s) |
 | Vote acknowledgement latency (p95)             | n/a        | 17 ms (1,000 voters in 3 s), 59 ms (5,000 voters in 5 s) |
-| Analytics snippet size (gzipped)               | under 2 KB | _TBD_  |
+| Analytics snippet size (gzipped)               | under 2 KB | 1,086 bytes (the build fails above 2,048) |
 | Ingest throughput (events/sec)                 | _TBD_      | _TBD_  |
 | Dashboard query time (p95) over synthetic data | _TBD_      | _TBD_  |
 | Shell + remotes bundle sizes                   | _TBD_      | _TBD_  |
@@ -273,9 +288,10 @@ Planned, written as the decisions are made:
 
 **Week 2: Analytics**
 
-- [ ] JS snippet and ingest endpoint with rate limiting
-- [ ] Time-partitioned raw events and rollup jobs
-- [ ] Query API and dashboard UI
+- [x] JS snippet and ingest endpoint with rate limiting
+- [x] Time-partitioned raw events and rollup jobs
+- [x] Query API
+- [ ] Dashboard UI
 - [ ] Load tests and first measurements
 
 **Week 3: Micro-frontend shell and polish**
