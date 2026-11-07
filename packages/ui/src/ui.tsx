@@ -5,6 +5,8 @@ import type {
   TextareaHTMLAttributes,
 } from "react";
 import { Link } from "react-router-dom";
+import { MoonIcon, SunIcon } from "./icons.tsx";
+import { useTheme } from "./theme.ts";
 
 export function cx(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -289,6 +291,25 @@ export function EmptyState({
   );
 }
 
+export function ThemeToggle({ className }: { className?: string }) {
+  const { theme, toggle } = useTheme();
+  const toLight = theme === "dark";
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={toLight ? "Switch to light mode" : "Switch to dark mode"}
+      title={toLight ? "Light mode" : "Dark mode"}
+      className={cx(
+        "inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-500/30 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white",
+        className,
+      )}
+    >
+      {toLight ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+    </button>
+  );
+}
+
 export function TopBar({
   left,
   right,
@@ -307,7 +328,10 @@ export function TopBar({
         )}
       >
         {left}
-        {right}
+        <div className="flex items-center gap-1">
+          {right}
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );
@@ -315,7 +339,8 @@ export function TopBar({
 
 export function GradientScreen({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-dvh bg-linear-to-b from-brand-50 to-slate-50 dark:from-brand-950 dark:to-slate-950">
+    <div className="relative min-h-dvh bg-linear-to-b from-brand-50 to-slate-50 dark:from-brand-950 dark:to-slate-950">
+      <ThemeToggle className="absolute right-4 top-4" />
       <main className="mx-auto flex min-h-dvh max-w-sm flex-col items-center justify-center gap-8 px-5 py-10">
         {children}
       </main>

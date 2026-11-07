@@ -8,7 +8,7 @@ A live Q&A and polling platform, a lightweight privacy-friendly analytics tool, 
 
 ## Screenshots
 
-The analytics dashboard, filled with about 66,000 synthetic events (see [Generating sample analytics data](#generating-sample-analytics-data)). It follows the system light or dark theme and works on a phone.
+The analytics dashboard, filled with about 66,000 synthetic events (see [Generating sample analytics data](#generating-sample-analytics-data)). It follows the system light or dark theme until you pick one with the toggle in the top right corner, and then remembers your choice. It works on a phone too.
 
 | Dark, last 7 days | Light, last 30 days |
 | --- | --- |

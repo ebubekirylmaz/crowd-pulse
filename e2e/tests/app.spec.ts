@@ -98,3 +98,24 @@ test("a failing analytics module leaves the rest of the app working", async ({
   await page.getByRole("link", { name: "My rooms" }).click();
   await expect(page.getByRole("heading", { name: "My rooms" })).toBeVisible();
 });
+
+test("the theme toggle overrides the system theme and is remembered", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+  const html = page.locator("html");
+  await expect(html).toHaveClass(/dark/);
+
+  await page.getByRole("button", { name: "Switch to light mode" }).click();
+  await expect(html).not.toHaveClass(/dark/);
+  const background = () =>
+    page.locator("body").evaluate((body) => getComputedStyle(body).backgroundColor);
+  const light = await background();
+
+  await page.reload();
+  await expect(html).not.toHaveClass(/dark/);
+  await page.getByRole("button", { name: "Switch to dark mode" }).click();
+  await expect(html).toHaveClass(/dark/);
+  expect(await background()).not.toBe(light);
+});

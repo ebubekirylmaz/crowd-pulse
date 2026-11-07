@@ -10,6 +10,7 @@ import {
   buttonStyles,
   Card,
   Logo,
+  ThemeToggle,
   TextInput,
 } from "../components/ui";
 import {
@@ -106,12 +107,15 @@ export default function Home() {
     <div className="min-h-dvh bg-linear-to-b from-brand-50 via-slate-50 to-slate-50 dark:from-brand-950 dark:via-slate-950 dark:to-slate-950">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5">
         <Logo />
-        <Link
-          to={loggedIn ? "/host" : "/host/login"}
-          className={buttonStyles({ variant: "ghost", size: "sm" })}
-        >
-          {loggedIn ? "Dashboard" : "Host login"}
-        </Link>
+        <div className="flex items-center gap-1">
+          <Link
+            to={loggedIn ? "/host" : "/host/login"}
+            className={buttonStyles({ variant: "ghost", size: "sm" })}
+          >
+            {loggedIn ? "Dashboard" : "Host login"}
+          </Link>
+          <ThemeToggle />
+        </div>
       </header>
 
       <main>
