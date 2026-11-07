@@ -4,7 +4,7 @@
 
 A live Q&A and polling platform, a lightweight privacy-friendly analytics tool, and a micro-frontend shell that ties them together as independently deployed modules.
 
-**Live demo:** [crowpulseqa.vercel.app](https://crowpulseqa.vercel.app) · **Demo video:** _coming soon_ · **Architecture decisions:** [`docs/adr`](./docs/adr)
+**Live demo:** [crowd-pulse-shell.vercel.app](https://crowd-pulse-shell.vercel.app) · **Demo video:** _coming soon_ · **Architecture decisions:** [`docs/adr`](./docs/adr)
 
 ## Screenshots
 
