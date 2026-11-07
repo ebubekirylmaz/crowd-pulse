@@ -19,6 +19,7 @@ The Q&A screens and the analytics dashboard are different products with differen
 ## Consequences
 
 - Verified locally with all three dev servers: navigating from a Q&A page to analytics is a client-side transition; stopping the analytics server leaves the shell and the Q&A pages working and shows the fallback; starting it again and reloading recovers.
+- Each Vercel project has `npx turbo-ignore @crowd-pulse/<app>` as its Ignored Build Step. It asks Turborepo whether the app or any workspace package it depends on changed since the last deployment, and skips the build if not. A change to `packages/ui` rebuilds all three, a change to the analytics dashboard rebuilds only analytics. Changing an environment variable does not trigger a build by itself, so the shell needs a manual redeploy when a remote address changes.
 - A retry cannot re-import a failed remote without a reload, because the federation runtime remembers the failed load. The button therefore reloads the page.
 - Shared singletons couple the three apps to compatible React and React Router majors. Version ranges are declared in each config, and a mismatch shows up as a runtime warning instead of a build error.
 - Each module's CSS is bundled with it, so shared styles are downloaded once per module. The cost is small for this size and avoids a global stylesheet owned by the shell.

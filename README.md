@@ -74,6 +74,7 @@ Most portfolio apps are a single frontend talking to a single API. This project 
 - The host token is read from one storage key and handed to the analytics module as a prop, so modules do not import each other's code
 - If a remote cannot be loaded, the shell keeps its header and shows an "unavailable" card with a retry (a reload), and the other module keeps working
 - Modules never call each other's code. The Q&A module emits typed domain events (`poll:voted`, `question:asked` and so on) through a tiny shared bus, and a bridge in the shell forwards them to analytics ([ADR 0008](./docs/adr/0008-event-based-module-communication.md))
+- Each Vercel project builds only when its own code or a workspace package it depends on changed (`npx turbo-ignore @crowd-pulse/<app>` as the Ignored Build Step), so a change to the analytics dashboard does not rebuild the Q&A module or the shell
 - Each app has its own build, and the shell finds the remotes through `REMOTE_QA_URL` and `REMOTE_ANALYTICS_URL`, so they can be deployed independently
 - Design reasons and trade-offs are in [ADR 0007](./docs/adr/0007-module-federation-shell.md)
 
@@ -354,7 +355,7 @@ Planned, written as the decisions are made:
 
 - [x] Shell app with Module Federation, shared token, remote failure fallback
 - [x] Event-based communication between modules, with a typed bus and an ADR
-- [ ] Independent deploy pipelines per module
+- [x] Independent deploy pipelines per module (each Vercel project skips builds its code did not affect)
 - [x] Playwright e2e tests (live poll through the shell, analytics module, remote failure fallback), run in CI
 - [x] Lighthouse run on the live site
 - [ ] Final README pass, ADRs, demo video
