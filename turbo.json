@@ -3,7 +3,13 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**"],
+      "env": [
+        "REMOTE_QA_URL",
+        "REMOTE_ANALYTICS_URL",
+        "VITE_API_URL",
+        "VITE_SITE_URL"
+      ]
     },
     "dev": { "cache": false, "persistent": true },
     "typecheck": { "dependsOn": ["^build"] },
