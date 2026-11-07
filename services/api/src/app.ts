@@ -1,6 +1,8 @@
 import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 
 import authRoutes from "./routes/auth.js";
+import analyticsRoutes from "./routes/analytics.js";
+import collectRoutes from "./routes/collect.js";
 import cors from "@fastify/cors";
 import demoRoutes from "./routes/demo.js";
 import { corsOrigin } from "./config.js";
@@ -45,6 +47,8 @@ export function buildApp() {
   app.register(pollRoutes);
   app.register(questionRoutes);
   app.register(demoRoutes);
+  app.register(collectRoutes);
+  app.register(analyticsRoutes);
 
   setupRealtime(app);
 

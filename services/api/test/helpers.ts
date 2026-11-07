@@ -8,6 +8,7 @@ export async function resetDb() {
     throw new Error(`refusing to reset database "${name}"`);
   }
   await sql`truncate hosts restart identity cascade`;
+  await sql`truncate events, rollup_hourly, rollup_daily, rollup_events_daily`;
 }
 
 const PASSWORD = "password123";
